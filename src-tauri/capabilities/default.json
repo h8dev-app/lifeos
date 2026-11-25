@@ -8,6 +8,8 @@
     "opener:default",
     "autostart:allow-is-enabled",
     "autostart:allow-enable",
-    "autostart:allow-disable"
+    "autostart:allow-disable",
+    "sql:default",
+    "sql:allow-execute"
   ]
 }

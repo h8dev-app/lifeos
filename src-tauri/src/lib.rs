@@ -1,9 +1,10 @@
 //! LifeOS backend entry point.
 //!
 //! Rust is kept small on purpose: it only does what the webview cannot do
-//! (system tray, global shortcut, single instance, autostart).
+//! (system tray, global shortcut, single instance, autostart, SQLite setup).
 //! All app logic lives in TypeScript under `src/`.
 
+mod db;
 mod overlay;
 
 use tauri::{
@@ -38,9 +39,11 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
-            overlay::overlay_hide
+            overlay::overlay_hide,
+            db::db_url
         ])
         .setup(|app| {
+            db::setup(app)?;
             setup_tray(app)?;
             setup_shortcut(app.handle());
             setup_autostart(app.handle());

@@ -3,7 +3,20 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 1** (squelette, overlay, tray, autostart, raccourci, `--toggle`, CI).
+État : **jalon 2** (overlay, tray, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash).
+
+## Saisie rapide
+
+| Commande | Enregistre |
+|---|---|
+| `/sport course 5km 28min` | activité, distance, durée (`1h20`, `500m` acceptés) |
+| `/commande ubereats 18€` | service, montant (`18,50€`, `18.5 €`) |
+| `/cuisine pâtes carbo` | plat |
+| `/devoirs maths 45min exercices p.12` | matière, durée, note |
+| `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
+
+Types de champs pour `/cat` : `texte`, `distance`, `durée`, `euros`, `nombre`.
+Survole une entrée récente pour la supprimer (×).
 
 ## Prérequis
 
@@ -91,4 +104,4 @@ Activé automatiquement au premier lancement d'un **build de release** (pas en d
 - Windows : `%APPDATA%\com.henri.lifeos\`
 - Fedora : `~/.local/share/com.henri.lifeos/`
 
-(Utilisées à partir du jalon 2.)
+Contenu : `lifeos.db` (SQLite). Les notes `notes/` arrivent au jalon 3.

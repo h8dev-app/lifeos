@@ -7,6 +7,8 @@
   --text: #eef0f5;
   --text-muted: #9aa1b2;
   --accent: #7aa2ff;
+  --ok: #4ade80;
+  --error: #f87171;
   --radius: 12px;
   --font: system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
