@@ -1,10 +1,8 @@
 /** Read ActivityWatch (local server) for one day. Nothing is copied to SQLite. */
-import { fetch } from "@tauri-apps/plugin-http";
+import { AW_PORT, localFetch } from "../localFetch";
 import { activeSpans, type AfkData, type AwEvent, type Span, type WindowData } from "./aggregate";
 
-// 127.0.0.1 and not "localhost": localhost resolves to ::1 (IPv6) first on
-// Fedora, while ActivityWatch/awatcher only listen on IPv4.
-const BASE = "http://127.0.0.1:5600/api/0";
+const BASE = "/api/0";
 export const AW_DOWNLOAD_URL = "https://activitywatch.net/downloads/";
 
 interface Bucket { id: string; type: string; last_updated?: string }
@@ -13,10 +11,10 @@ export type AwDay =
   | { ok: true; spans: Span[]; hasAfk: boolean }
   | { ok: false; reason: string };
 
-async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { method: "GET", connectTimeout: 2000 });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as T;
+async function getJson<T>(path: string): Promise<T> {
+  const res = await localFetch(AW_PORT, path);
+  if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
+  return JSON.parse(res.body) as T;
 }
 
 /** Most recently updated bucket of a given type (one per watcher/host). */

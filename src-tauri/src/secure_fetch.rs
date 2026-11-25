@@ -6,7 +6,7 @@
 //! own secret, so a key can't be sent to the wrong service.
 
 use serde::Serialize;
-use tauri_plugin_http::reqwest;
+use reqwest;
 
 use crate::secrets;
 

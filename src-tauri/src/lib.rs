@@ -6,6 +6,7 @@
 //! All app logic lives in TypeScript under `src/`.
 
 mod db;
+mod local_fetch;
 mod overlay;
 mod secrets;
 mod secure_fetch;
@@ -38,9 +39,6 @@ pub fn run() {
         // File access for Markdown notes. Scope limited to `<app data>/notes/`
         // in capabilities/default.json.
         .plugin(tauri_plugin_fs::init())
-        // HTTP from the webview without CORS issues (Ollama on localhost).
-        // Allowed URLs are listed in capabilities/default.json.
-        .plugin(tauri_plugin_http::init())
         // Non-sensitive settings (provider, model names) in settings.json.
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_autostart::init(
@@ -55,7 +53,8 @@ pub fn run() {
             secrets::secret_set,
             secrets::secret_delete,
             secrets::secret_exists,
-            secure_fetch::secure_fetch
+            secure_fetch::secure_fetch,
+            local_fetch::local_fetch
         ])
         .setup(|app| {
             db::setup(app)?;

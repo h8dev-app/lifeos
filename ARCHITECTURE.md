@@ -39,10 +39,11 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src/lib/parsing/task.ts` | `/tache` arguments (tested) |
 | `src/lib/notes/markdown.ts` | Note title, file name, FTS query, hash (tested) |
 | `src-tauri/src/secrets.rs` | Keyring: `secret_set` / `secret_delete` / `secret_exists` (no read command) |
+| `src-tauri/src/local_fetch.rs` | HTTP to Ollama / ActivityWatch on 127.0.0.1 without `Origin` header (tested) |
 | `src-tauri/src/secure_fetch.rs` | HTTPS with a keyring secret, 3 allowed hosts, each tied to one secret (tested) |
 | `src/lib/ai/` | `provider.ts` (interface), `ollama.ts`, `anthropic.ts`, `openai.ts`, `registry.ts`, `prompt.ts`, `entrySchema.ts` (tested) |
 | `src/lib/activity/aggregate.ts` | ActivityWatch events → active spans, totals per app/title, timeline blocks (tested) |
-| `src/lib/activity/activitywatch.ts` | Reads AW buckets/events for a day (plugin-http, `localhost:5600`) |
+| `src/lib/activity/activitywatch.ts` | Reads AW buckets/events for a day (via `local_fetch`) |
 | `src/lib/activity/github.ts` | GitHub events → `code` entries, commit count via compare API (tested) |
 | `src/lib/activity/sync.ts` | GitHub sync (every 10 min, dedup by `external_id`) |
 | `src/lib/activity/timeline.ts` | Mixed timeline + duration format (tested) |
@@ -131,8 +132,11 @@ free text ─► provider.parseEntry(text, categories)
   so one strict schema works for every provider and category.
 - Values are converted with the same unit parsers as slash commands; unknown
   keys or bad values go to `note`. Dates in the future or older than 30 days → now.
-- Ollama is called from the webview through `tauri-plugin-http` (CORS), scope
-  `localhost:11434` only. Anthropic/OpenAI go through `secure_fetch` in Rust.
+- Ollama and ActivityWatch are called through the Rust command `local_fetch`
+  (only `127.0.0.1`, ports 11434 and 5600). The webview can't call them
+  directly: it sends an `Origin` header and ActivityWatch answers 403 to any web
+  origin (Ollama too for the Windows origin). This replaces `tauri-plugin-http`
+  planned in the addendum. Anthropic/OpenAI go through `secure_fetch` in Rust.
 
 ### Adding an AI provider
 
