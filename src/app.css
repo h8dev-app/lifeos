@@ -1,0 +1,25 @@
+/* Design tokens. Change colors here, never inline in components. */
+:root {
+  --overlay-bg: rgba(12, 14, 20, 0.82);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-strong: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
+  --text: #eef0f5;
+  --text-muted: #9aa1b2;
+  --accent: #7aa2ff;
+  --radius: 12px;
+  --font: system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  margin: 0;
+  height: 100%;
+  /* Transparent so the window background (desktop) shows through the overlay. */
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+}
