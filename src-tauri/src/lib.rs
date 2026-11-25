@@ -97,6 +97,13 @@ fn setup_tray(app: &App) -> tauri::Result<()> {
 fn setup_shortcut(app: &AppHandle) {
     use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
+    // On Wayland the GNOME shortcut already calls `--toggle`. Registering here
+    // too (through XWayland) could toggle twice when an X11 window has focus.
+    if cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some() {
+        eprintln!("[lifeos] Wayland session: use a GNOME shortcut for `lifeos --toggle`");
+        return;
+    }
+
     let result = app
         .global_shortcut()
         .on_shortcut(SHORTCUT, |app, _shortcut, event| {
