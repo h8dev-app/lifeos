@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activePeriods, activeSpans, timelineBlocks, totalSeconds, totalsByApp, type AwEvent, type WindowData } from "./aggregate";
+import { prettyApp, activePeriods, activeSpans, timelineBlocks, totalSeconds, totalsByApp, type AwEvent, type WindowData } from "./aggregate";
 import { pushEventsToEntries, isValidGithubUser } from "./github";
 import { buildTimeline, formatSeconds } from "./timeline";
 
@@ -36,6 +36,13 @@ describe("activeSpans", () => {
   it("unnamed app → Inconnu", () => {
     expect(activeSpans([{ timestamp: at(0), duration: 60, data: {} }], null, ...DAY)[0].app).toBe("Inconnu");
   });
+});
+
+describe("prettyApp", () => {
+  it.each([
+    ["org.gnome.Ptyxis", "Ptyxis"], ["com.visualstudio.code", "Code"], ["firefox", "Firefox"],
+    ["Code", "Code"], ["", "Inconnu"], [undefined, "Inconnu"], ["lunarclient", "Lunarclient"],
+  ])("%s → %s", (raw, name) => expect(prettyApp(raw)).toBe(name));
 });
 
 describe("totalsByApp", () => {

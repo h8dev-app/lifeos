@@ -15,6 +15,17 @@ export interface AwEvent<D = Record<string, unknown>> {
 export type WindowData = { app?: string; title?: string };
 export type AfkData = { status?: string };
 
+/**
+ * Readable app name: GNOME/Flatpak ids like `org.gnome.Ptyxis` or
+ * `com.visualstudio.code` become `Ptyxis` / `Code`; plain names are capitalised.
+ */
+export function prettyApp(raw: string | undefined): string {
+  const name = raw?.trim();
+  if (!name) return "Inconnu";
+  const last = /^[a-z0-9-]+(\.[A-Za-z0-9_-]+){2,}$/.test(name) ? name.split(".").pop()! : name;
+  return last.charAt(0).toUpperCase() + last.slice(1);
+}
+
 /** A window event reduced to milliseconds, clipped to active periods. */
 export interface Span {
   start: number;
@@ -61,7 +72,7 @@ export function activeSpans(
   const spans: Span[] = [];
   for (const e of windows) {
     const w = toInterval(e);
-    const app = e.data.app?.trim() || "Inconnu";
+    const app = prettyApp(e.data.app);
     const title = e.data.title?.trim() ?? "";
     for (const p of periods) {
       const start = Math.max(w.start, p.start, from);
