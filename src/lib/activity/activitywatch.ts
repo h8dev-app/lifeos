@@ -2,7 +2,9 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { activeSpans, type AfkData, type AwEvent, type Span, type WindowData } from "./aggregate";
 
-const BASE = "http://localhost:5600/api/0";
+// 127.0.0.1 and not "localhost": localhost resolves to ::1 (IPv6) first on
+// Fedora, while ActivityWatch/awatcher only listen on IPv4.
+const BASE = "http://127.0.0.1:5600/api/0";
 export const AW_DOWNLOAD_URL = "https://activitywatch.net/downloads/";
 
 interface Bucket { id: string; type: string; last_updated?: string }
@@ -34,8 +36,8 @@ export async function loadAwDay(from: Date, to: Date): Promise<AwDay> {
   let buckets: Bucket[];
   try {
     buckets = Object.values(await getJson<Record<string, Bucket>>(`${BASE}/buckets/`));
-  } catch {
-    return { ok: false, reason: "ActivityWatch ne tourne pas (http://localhost:5600)." };
+  } catch (e) {
+    return { ok: false, reason: `ActivityWatch injoignable sur http://127.0.0.1:5600 (${e}).` };
   }
   const win = pick(buckets, "currentwindow");
   if (!win) return { ok: false, reason: "ActivityWatch tourne, mais aucun suivi des fenêtres (watcher « window » absent)." };

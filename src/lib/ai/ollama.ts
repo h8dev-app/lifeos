@@ -2,7 +2,8 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { httpError, makeProvider, type ProviderStatus } from "./provider";
 
-const BASE = "http://localhost:11434";
+// IPv4 explicitly: "localhost" may resolve to ::1 first.
+const BASE = "http://127.0.0.1:11434";
 
 export function ollamaProvider(model: string) {
   return makeProvider({
@@ -17,8 +18,8 @@ export function ollamaProvider(model: string) {
         const names = models.map((m) => m.name);
         const found = names.some((n) => n === model || n === `${model}:latest`);
         return found ? { ok: true } : { ok: false, reason: `Modèle absent. Lance : ollama pull ${model}` };
-      } catch {
-        return { ok: false, reason: "Ollama ne tourne pas (http://localhost:11434)." };
+      } catch (e) {
+        return { ok: false, reason: `Ollama injoignable sur http://127.0.0.1:11434 (${e}).` };
       }
     },
 
