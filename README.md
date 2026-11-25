@@ -3,7 +3,7 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 4** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre).
+État : **jalon 5** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub).
 
 ## Saisie rapide
 
@@ -22,7 +22,9 @@ Survole une entrée récente pour la supprimer (×).
 
 Échéances : `@auj`, `@demain`, `@après-demain`, `@lundi`…`@dimanche` (le prochain, aujourd'hui inclus), `@28/11`, `@28/11/2026`, `@2026-11-28`.
 
-Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Réglages.
+Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Activité, `Ctrl+5` Réglages.
+
+- **Activité** : temps actif par application (clic = détail par titre de fenêtre) et fil de la journée qui mélange saisies, pushs GitHub et activité. `←` / `→` pour changer de jour.
 
 ### Texte libre (IA)
 
@@ -126,6 +128,22 @@ La clé va dans le trousseau système (Secret Service sous Fedora, Gestionnaire 
 Modèle Anthropic par défaut : `claude-opus-5-5`. `claude-haiku-5-5` coûte environ 40× moins cher et suffit pour cette tâche.
 
 Test du prompt contre Ollama (optionnel) : `LIVE_OLLAMA=1 npx vitest run ollama.live`.
+
+## Configurer l'activité
+
+### ActivityWatch
+
+LifeOS lit le serveur ActivityWatch local (`http://localhost:5600`) : fenêtre active et inactivité. Rien n'est copié dans la base, tout est lu en direct. Sans ActivityWatch, la vue Activité affiche un message et montre quand même les saisies.
+
+Téléchargement : https://activitywatch.net/downloads/
+
+**GNOME Wayland** : le suivi des fenêtres d'origine ne voit pas les applis Wayland. Il faut `awatcher` (https://github.com/2e3s/awatcher) avec l'extension GNOME qu'il demande, à la place de `aw-watcher-window` / `aw-watcher-afk`. LifeOS lit les deux de la même façon.
+
+### GitHub
+
+Réglages → GitHub → ton pseudo. Les pushs publics sont ajoutés à la catégorie **Code** toutes les 10 minutes (et au lancement), sans doublon.
+Depuis 2025, GitHub ne donne plus le nombre de commits dans ses événements : LifeOS le récupère via l'API de comparaison pour les nouveaux pushs (10 max par synchro).
+Optionnel : un token GitHub (Réglages → Clés API), stocké dans le trousseau, augmente la limite de 60 à 5 000 requêtes/heure.
 
 ## Démarrage automatique
 

@@ -6,9 +6,10 @@ import { listCategories } from "./db/categories";
 import { listRecentEntries, type RecentEntry } from "./db/entries";
 import { listTasks, type Task } from "./db/tasks";
 import type { Category, EntryData } from "./types";
+import { syncGithub, type GithubSyncState } from "./activity/sync";
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
 
-export type View = "dashboard" | "tasks" | "notes" | "settings";
+export type View = "dashboard" | "tasks" | "notes" | "activity" | "settings";
 
 /** Entry proposed by the AI, waiting for the user's confirmation. */
 export interface PendingEntry {
@@ -30,6 +31,8 @@ export const app = $state({
   settings: { ...DEFAULT_SETTINGS } as Settings,
   pending: null as PendingEntry | null,
   aiBusy: false,
+  /** Last GitHub sync result, shown in Settings and Activity. */
+  github: null as GithubSyncState,
 });
 
 export function say(message: string, kind: ToastKind = "info") {
@@ -56,4 +59,17 @@ export async function guard<T>(action: () => Promise<T>): Promise<T | undefined>
 
 export async function reloadSettings() {
   app.settings = await loadSettings();
+}
+
+/** One GitHub sync, result stored in `app.github`. Silent when no username. */
+export async function runGithubSync(): Promise<void> {
+  const user = app.settings.githubUser;
+  if (!user) return;
+  try {
+    const { added } = await syncGithub(user);
+    app.github = { at: new Date().toISOString(), added };
+    if (added) await reloadEntries();
+  } catch (e) {
+    app.github = { at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) };
+  }
 }

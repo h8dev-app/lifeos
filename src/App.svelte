@@ -8,9 +8,11 @@
   import Tasks from "./views/Tasks.svelte";
   import Notes from "./views/Notes.svelte";
   import Settings from "./views/Settings.svelte";
+  import Activity from "./views/Activity.svelte";
+  import { GITHUB_POLL_MS } from "./lib/activity/sync";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
-  import { app, guard, reloadEntries, reloadSettings, reloadTasks, say, type View } from "./lib/app.svelte";
+  import { app, guard, reloadEntries, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
   import { closeOverlay, onOverlayShown } from "./lib/overlay";
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
@@ -126,7 +128,7 @@
     return true;
   }
 
-  const VIEWS: View[] = ["dashboard", "tasks", "notes", "settings"];
+  const VIEWS: View[] = ["dashboard", "tasks", "notes", "activity", "settings"];
 
   function onKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
@@ -134,7 +136,7 @@
       // First Escape cancels an AI proposal, the next one closes the overlay.
       if (app.pending) cancelPending();
       else closeOverlay();
-    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4"].includes(e.key)) {
+    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];
     }
@@ -142,7 +144,11 @@
 
   onMount(() => {
     bar.focus();
-    reloadSettings().catch((e) => say(`Réglages illisibles : ${e}`, "error"));
+    // Settings first (GitHub username), then a first sync, then every 10 min.
+    reloadSettings()
+      .then(runGithubSync)
+      .catch((e) => say(`Réglages illisibles : ${e}`, "error"));
+    const githubTimer = setInterval(runGithubSync, GITHUB_POLL_MS);
     Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
@@ -152,7 +158,10 @@
       reloadTasks(); // the day may have changed while hidden
       if (app.view !== "notes") bar.focus();
     });
-    return () => { unlisten.then((f) => f()); };
+    return () => {
+      unlisten.then((f) => f());
+      clearInterval(githubTimer);
+    };
   });
 </script>
 
@@ -164,6 +173,7 @@
     {#if app.view === "dashboard"}<Dashboard />
     {:else if app.view === "tasks"}<Tasks />
     {:else if app.view === "notes"}<Notes />
+    {:else if app.view === "activity"}<Activity />
     {:else}<Settings />{/if}
   </div>
   <footer>
@@ -175,7 +185,7 @@
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">Échap pour fermer · Ctrl+1…4 pour changer de vue</p>
+    <p class="hint">Échap pour fermer · Ctrl+1…5 pour changer de vue</p>
   </footer>
 </main>
 

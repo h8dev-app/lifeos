@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { app, guard, reloadSettings, say } from "../lib/app.svelte";
+  import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
+  import { isValidGithubUser } from "../lib/activity/github";
+  import { formatWhen } from "../lib/clock";
   import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
@@ -14,7 +16,18 @@
   const KEYS: { name: SecretName; label: string; url: string }[] = [
     { name: "anthropic_api_key", label: "Clé API Anthropic", url: "https://console.anthropic.com/settings/keys" },
     { name: "openai_api_key", label: "Clé API OpenAI", url: "https://platform.openai.com/api-keys" },
+    { name: "github_token", label: "Token GitHub (optionnel)", url: "https://github.com/settings/tokens" },
   ];
+
+  let githubInput = $state(app.settings.githubUser);
+  $effect(() => { githubInput = app.settings.githubUser; });
+
+  async function saveGithubUser() {
+    const user = githubInput.trim();
+    if (user && !isValidGithubUser(user)) { say(`Pseudo GitHub invalide : « ${user} ».`, "error"); return; }
+    await set("githubUser", user);
+    if (user) { say("Synchronisation GitHub…"); await runGithubSync(); say(""); }
+  }
 
   let status = $state<ProviderStatus | null>(null);
   let keySet = $state<Record<string, boolean>>({});
@@ -84,6 +97,22 @@
     <input id="m-openai" value={app.settings.openaiModel} onchange={(e) => set("openaiModel", e.currentTarget.value)} />
   </div>
   <p class="hint">Anthropic : <code>claude-opus-5-5</code> (le plus capable), <code>claude-haiku-5-5</code> (environ 40× moins cher, suffisant pour ça).</p>
+
+  <h2>GitHub</h2>
+  <p class="hint">Les pushs publics de ce compte sont ajoutés à la catégorie Code toutes les 10 minutes. Un token (ci-dessous) donne plus de requêtes et les dépôts privés auxquels il a accès.</p>
+  <div class="grid">
+    <label for="gh-user">Pseudo</label>
+    <input id="gh-user" placeholder="ex. torvalds" bind:value={githubInput}
+      onkeydown={(e) => e.key === "Enter" && saveGithubUser()} onblur={saveGithubUser} />
+  </div>
+  {#if app.github}
+    <p class="hint">
+      Dernière synchro {formatWhen(app.github.at)} :
+      {#if "error" in app.github}<span class="err">{app.github.error}</span>
+      {:else}{app.github.added} nouveau(x) push(s).{/if}
+      <button class="link" onclick={runGithubSync}>Synchroniser</button>
+    </p>
+  {/if}
 
   <h2>Clés API</h2>
   <p class="hint">Stockées dans le trousseau système (Secret Service / Gestionnaire d'identifiants). L'appli ne peut pas les relire, seulement s'en servir.</p>

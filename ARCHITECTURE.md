@@ -41,12 +41,17 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src-tauri/src/secrets.rs` | Keyring: `secret_set` / `secret_delete` / `secret_exists` (no read command) |
 | `src-tauri/src/secure_fetch.rs` | HTTPS with a keyring secret, 3 allowed hosts, each tied to one secret (tested) |
 | `src/lib/ai/` | `provider.ts` (interface), `ollama.ts`, `anthropic.ts`, `openai.ts`, `registry.ts`, `prompt.ts`, `entrySchema.ts` (tested) |
+| `src/lib/activity/aggregate.ts` | ActivityWatch events → active spans, totals per app/title, timeline blocks (tested) |
+| `src/lib/activity/activitywatch.ts` | Reads AW buckets/events for a day (plugin-http, `localhost:5600`) |
+| `src/lib/activity/github.ts` | GitHub events → `code` entries, commit count via compare API (tested) |
+| `src/lib/activity/sync.ts` | GitHub sync (every 10 min, dedup by `external_id`) |
+| `src/lib/activity/timeline.ts` | Mixed timeline + duration format (tested) |
 | `src/lib/settings.ts` | Non-sensitive settings (store plugin, `settings.json`) |
 | `src/lib/secrets.ts` | TS side of the keyring + `secureFetch` |
 | `src/lib/app.svelte.ts` | Shared UI state (runes): view, categories, entries, tasks, toast |
 | `src/lib/format.ts` | French display of entry values |
 | `src/components/` | `CommandBar`, `Nav`, `RecentEntries`, `CategoryChips`, `TaskList`, `NoteEditor`, `Toast` |
-| `src/views/` | `Dashboard`, `Tasks`, `Notes`, `Settings` |
+| `src/views/` | `Dashboard`, `Tasks`, `Notes`, `Activity`, `Settings` |
 | `src/lib/clock.ts` | Date/time formatting (tested) |
 
 ## User data location
@@ -144,6 +149,18 @@ free text ─► provider.parseEntry(text, categories)
   wrong host (`api.openai.com` never receives the Anthropic key).
 - Keys never go to SQLite, `settings.json` or logs.
 
+## Activity
+
+- **ActivityWatch** is read live, never copied to SQLite (v1). For a day: the
+  most recently updated `currentwindow` bucket + `afkstatus` bucket. Window time
+  counts only inside not-afk periods (all of it if there is no afk bucket).
+  Timeline blocks merge the same app across gaps < 2 min and hide switches < 2 min.
+- **GitHub**: `GET /users/{user}/events` every 10 min. `PushEvent` → entry in
+  the system category `code` (source `github`, `external_id = github:<id>`,
+  `ON CONFLICT DO NOTHING`). GitHub removed commit lists from push events, so
+  new pushes get `total_commits` from `/repos/{repo}/compare/{before}...{head}`.
+  Username and repo/SHA are validated before building URLs.
+
 ## Coming next
 
-Milestone 5: ActivityWatch + GitHub + Activity view. Full plan: `docs/`.
+Milestone 6: Claude Code panel (xterm.js + PTY). Full plan: `docs/`.

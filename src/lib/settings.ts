@@ -11,6 +11,8 @@ export interface Settings {
   ollamaModel: string;
   anthropicModel: string;
   openaiModel: string;
+  /** GitHub username for push tracking; empty = off. */
+  githubUser: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -18,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ollamaModel: "qwen2.5:3b",
   anthropicModel: "claude-opus-5-5",
   openaiModel: "gpt-5-mini",
+  githubUser: "",
 };
 
 let store: Promise<Store> | null = null;
@@ -29,7 +32,7 @@ export async function loadSettings(): Promise<Settings> {
   const out = { ...DEFAULT_SETTINGS };
   for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
     const value = await s.get<string>(key);
-    if (typeof value === "string" && value.trim()) (out as Record<string, string>)[key] = value.trim();
+    if (typeof value === "string" && (value.trim() || key === "githubUser")) (out as Record<string, string>)[key] = value.trim();
   }
   return out;
 }
