@@ -3,7 +3,11 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 6** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub, panneau Claude Code).
+État : **v1 complète** (jalons 1 à 7) : overlay, raccourci, `--toggle`, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub, panneau Claude Code, tableau de bord avec séries.
+
+## Tableau de bord
+
+Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si la série attend l'entrée du jour), tâches du jour, dernières entrées, temps actif par appli (top 5), barre de saisie en bas.
 
 ## Saisie rapide
 
@@ -76,8 +80,20 @@ cd src-tauri && cargo test
 ## Build
 
 ```sh
-npm run tauri build
+npm run tauri build                     # tous les formats de la plateforme
+npx tauri build --bundles rpm           # Fedora seulement
 ```
+
+Installation sur Fedora :
+
+```sh
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.1.0-1.x86_64.rpm
+```
+
+Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).
+Pense à faire pointer le raccourci GNOME vers `lifeos --toggle`.
+
+> La version de dev (`npm run tauri dev`) et la version installée partagent la même base et la même instance unique : quitte l'une avant de lancer l'autre.
 
 - Windows : `src-tauri/target/release/bundle/nsis/*.exe` et `msi/*.msi`
 - Fedora : `src-tauri/target/release/bundle/rpm/*.rpm`

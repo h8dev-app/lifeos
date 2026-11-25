@@ -187,6 +187,17 @@ ResizeObserver ─► fit ─► pty_resize         EOF ─► "pty://exit" ─�
   and hiding the overlay. All sessions are killed on `RunEvent::Exit`.
 - Escape inside the terminal goes to Claude; Shift+Escape closes the overlay.
 
-## Coming next
+## Dashboard and streaks
 
-Milestone 7: dashboard + polish. Full plan: `docs/`.
+- Streaks are computed when reading (`src/lib/stats/streaks.ts`, tested): the
+  local days with at least one entry per category over 120 days. Current streak
+  = consecutive days up to today, or up to yesterday when nothing is logged yet
+  today (shown as pending). Only streaks of 2+ days are displayed.
+- Today's activity summary reuses the ActivityWatch loader (top 5 apps).
+
+## Out of scope v1 (architecture ready)
+
+- Supabase sync: UUID text ids, `updated_at`, `deleted_at` on every table;
+  SQLite stays the source of truth.
+- Google Calendar / Gmail, AI weekly reviews (`AiProvider.chat` is reserved),
+  screenpipe.
