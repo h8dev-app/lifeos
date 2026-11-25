@@ -7,6 +7,7 @@
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
   import type { ProviderStatus } from "../lib/ai/provider";
+  import { disable as autostartOff, enable as autostartOn, isEnabled as autostartEnabled } from "@tauri-apps/plugin-autostart";
 
   const PROVIDERS: { id: ProviderId; label: string; hint: string }[] = [
     { id: "ollama", label: "Ollama (local, gratuit)", hint: "Tourne sur ta machine, rien ne sort." },
@@ -42,7 +43,19 @@
     for (const k of KEYS) keySet[k.name] = (await guard(() => secretExists(k.name))) ?? false;
   }
 
-  onMount(() => { refreshStatus(); refreshKeys(); });
+  let autostart = $state<boolean | null>(null);
+  const isDev = import.meta.env.DEV;
+
+  async function toggleAutostart(on: boolean) {
+    await guard(() => (on ? autostartOn() : autostartOff()));
+    autostart = (await guard(autostartEnabled)) ?? false;
+  }
+
+  onMount(async () => {
+    refreshStatus();
+    refreshKeys();
+    autostart = (await guard(autostartEnabled)) ?? false;
+  });
 
   async function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     await guard(() => saveSetting(key, value));
@@ -69,6 +82,14 @@
 </script>
 
 <section>
+  <h2>Démarrage</h2>
+  <label class="check">
+    <input type="checkbox" checked={!!autostart} disabled={autostart === null || isDev}
+      onchange={(e) => toggleAutostart(e.currentTarget.checked)} />
+    Lancer LifeOS au démarrage de la session (caché, dans la zone de notification)
+  </label>
+  {#if isDev}<p class="hint">Désactivé en mode dev : il enregistrerait le binaire de développement.</p>{/if}
+
   <h2>IA pour le texte libre</h2>
   <div class="providers">
     {#each PROVIDERS as p (p.id)}
@@ -142,12 +163,13 @@
   .providers label.active { border-color: var(--accent); }
   .providers span { display: flex; flex-direction: column; }
   small { color: var(--text-muted); }
-  input[type="radio"] { accent-color: var(--accent); }
+  input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
+  .check { display: flex; gap: 10px; align-items: center; cursor: pointer; }
   .status { margin: 10px 0 0; }
   .ok { color: var(--ok); }
   .err { color: var(--error); }
   .grid { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; }
-  input:not([type="radio"]) {
+  input:not([type="radio"]):not([type="checkbox"]) {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 7px 10px; color: var(--text); font: 14px var(--mono); outline: none; min-width: 0;
   }

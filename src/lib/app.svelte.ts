@@ -3,7 +3,9 @@
  * and call the reload functions after a change.
  */
 import { listCategories } from "./db/categories";
-import { listRecentEntries, type RecentEntry } from "./db/entries";
+import { entryDaysByCategory, listRecentEntries, type RecentEntry } from "./db/entries";
+import { computeStreaks, type Streak } from "./stats/streaks";
+import { today } from "./dates";
 import { listTasks, type Task } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
@@ -24,6 +26,7 @@ export const app = $state({
   view: "dashboard" as View,
   categories: [] as Category[],
   recent: [] as RecentEntry[],
+  streaks: [] as Streak[],
   tasks: [] as Task[],
   /** Note to open when the Notes view shows (set by `/note <titre>`). */
   openNoteId: null as string | null,
@@ -42,7 +45,10 @@ export function say(message: string, kind: ToastKind = "info") {
 }
 
 export async function reloadEntries() {
-  [app.categories, app.recent] = await Promise.all([listCategories(), listRecentEntries(10)]);
+  const [categories, recent, days] = await Promise.all([listCategories(), listRecentEntries(10), entryDaysByCategory()]);
+  app.categories = categories;
+  app.recent = recent;
+  app.streaks = computeStreaks(days, today());
 }
 
 export async function reloadTasks() {

@@ -1,5 +1,6 @@
 import type { EntryData, EntrySource } from "../types";
 import { getDb, newId, nowIso } from "./client";
+import { toLocalDate } from "../dates";
 
 export interface RecentEntry {
   id: string;
@@ -100,4 +101,24 @@ export async function knownExternalIds(ids: string[]): Promise<Set<string>> {
     ids,
   );
   return new Set(rows.map((r) => r.external_id));
+}
+
+/** Local days (YYYY-MM-DD) with at least one entry, per category, over the last `days` days. */
+export async function entryDaysByCategory(days = 120): Promise<{ categoryId: string; day: string }[]> {
+  const db = await getDb();
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const rows = await db.select<{ category_id: string; occurred_at: string }[]>(
+    "SELECT category_id, occurred_at FROM entries WHERE deleted_at IS NULL AND occurred_at >= $1",
+    [since],
+  );
+  const seen = new Set<string>();
+  const out: { categoryId: string; day: string }[] = [];
+  for (const r of rows) {
+    const day = toLocalDate(new Date(r.occurred_at));
+    const key = `${r.category_id}|${day}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ categoryId: r.category_id, day });
+  }
+  return out;
 }
