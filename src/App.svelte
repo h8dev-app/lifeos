@@ -7,7 +7,10 @@
   import Dashboard from "./views/Dashboard.svelte";
   import Tasks from "./views/Tasks.svelte";
   import Notes from "./views/Notes.svelte";
-  import { app, guard, reloadEntries, reloadTasks, say, type View } from "./lib/app.svelte";
+  import Settings from "./views/Settings.svelte";
+  import EntryPreview from "./components/EntryPreview.svelte";
+  import { getProvider } from "./lib/ai/registry";
+  import { app, guard, reloadEntries, reloadSettings, reloadTasks, say, type View } from "./lib/app.svelte";
   import { closeOverlay, onOverlayShown } from "./lib/overlay";
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
@@ -38,14 +41,55 @@
           }
           return false;
         case "freetext":
-          say("Texte libre → IA au jalon 4. Utilise une commande /… pour l'instant.");
-          return false;
+          return handleFreeText(r.text);
         case "error":
           say(r.message, "error");
           return false;
       }
     });
     return ok ?? false;
+  }
+
+  /** Free text → AI → preview. Saved only after confirmation. */
+  async function handleFreeText(text: string): Promise<boolean> {
+    if (app.aiBusy) return false;
+    const provider = getProvider(app.settings);
+    const status = await provider.status();
+    if (!status.ok) {
+      say(`Texte libre indisponible : ${status.reason} Les commandes /… marchent toujours.`, "error");
+      return false;
+    }
+    app.aiBusy = true;
+    say(`Analyse par ${provider.label}…`);
+    try {
+      const r = await provider.parseEntry(text, app.categories);
+      if (r.kind === "none") { say("L'IA n'a rien trouvé à enregistrer dans cette phrase.", "error"); return false; }
+      if (r.kind === "error") { say(r.message, "error"); return false; }
+      app.pending = { categoryId: r.category.id, data: r.data, occurredAt: r.occurredAt, text };
+      say("");
+      return true;
+    } finally {
+      app.aiBusy = false;
+    }
+  }
+
+  async function confirmPending() {
+    const p = app.pending;
+    if (!p) return;
+    const category = app.categories.find((c) => c.id === p.categoryId);
+    await guard(async () => {
+      await addEntry(p.categoryId, p.data, "ai", p.occurredAt);
+      app.pending = null;
+      await reloadEntries();
+      if (category) say(`✓ ${category.icon ?? ""} ${category.name} : ${formatEntryData(category, p.data)}`, "ok");
+    });
+    bar.focus();
+  }
+
+  function cancelPending() {
+    app.pending = null;
+    say("Entrée annulée.");
+    bar.focus();
   }
 
   async function handleTask(args: string): Promise<boolean> {
@@ -82,13 +126,15 @@
     return true;
   }
 
-  const VIEWS: View[] = ["dashboard", "tasks", "notes"];
+  const VIEWS: View[] = ["dashboard", "tasks", "notes", "settings"];
 
   function onKeydown(e: KeyboardEvent) {
     if (e.key === "Escape") {
       e.preventDefault();
-      closeOverlay();
-    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3"].includes(e.key)) {
+      // First Escape cancels an AI proposal, the next one closes the overlay.
+      if (app.pending) cancelPending();
+      else closeOverlay();
+    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];
     }
@@ -96,6 +142,7 @@
 
   onMount(() => {
     bar.focus();
+    reloadSettings().catch((e) => say(`Réglages illisibles : ${e}`, "error"));
     Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
@@ -116,15 +163,19 @@
   <div class="content">
     {#if app.view === "dashboard"}<Dashboard />
     {:else if app.view === "tasks"}<Tasks />
-    {:else}<Notes />{/if}
+    {:else if app.view === "notes"}<Notes />
+    {:else}<Settings />{/if}
   </div>
   <footer>
+    {#if app.pending}
+      <EntryPreview entry={app.pending} onconfirm={confirmPending} oncancel={cancelPending} />
+    {/if}
     <Toast message={app.toast.message} kind={app.toast.kind} />
     <CommandBar bind:this={bar} onsubmit={handle} />
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">Échap pour fermer · Ctrl+1/2/3 pour changer de vue</p>
+    <p class="hint">Échap pour fermer · Ctrl+1…4 pour changer de vue</p>
   </footer>
 </main>
 

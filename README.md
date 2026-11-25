@@ -3,7 +3,7 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 3** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown).
+État : **jalon 4** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre).
 
 ## Saisie rapide
 
@@ -22,7 +22,13 @@ Survole une entrée récente pour la supprimer (×).
 
 Échéances : `@auj`, `@demain`, `@après-demain`, `@lundi`…`@dimanche` (le prochain, aujourd'hui inclus), `@28/11`, `@28/11/2026`, `@2026-11-28`.
 
-Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes.
+Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Réglages.
+
+### Texte libre (IA)
+
+Tout ce qui ne commence pas par `/` part vers l'IA choisie dans les Réglages, par ex. « j'ai couru 5 km ce matin en 28 min ».
+L'IA propose une entrée (catégorie, valeurs, heure) : `Entrée` pour l'enregistrer, `Échap` pour l'annuler. Rien n'est enregistré sans confirmation.
+Si l'IA est indisponible, seules les commandes `/…` marchent.
 
 - **Tâches** : cocher, reporter à demain, supprimer. Une tâche non faite reste dans « Aujourd'hui » les jours suivants.
 - **Notes** : fichiers `.md` dans le dossier `notes/` (modifiables avec n'importe quel éditeur). Sauvegarde automatique, aperçu avec `Ctrl+E`, recherche plein texte. Une note supprimée part dans `notes/.trash/`.
@@ -101,6 +107,26 @@ Attention : la première commande **remplace** la liste des raccourcis personnal
 
 GNOME n'affiche pas d'icônes de tray par défaut. Installe l'extension « AppIndicator and KStatusNotifierItem Support » (`sudo dnf install gnome-shell-extension-appindicator`, puis active-la dans Extensions).
 
+## Configurer l'IA
+
+### Ollama (par défaut, gratuit, local)
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh   # Fedora/Linux ; Windows : installeur sur ollama.com
+ollama pull qwen2.5:3b                          # ~2 Go
+```
+
+Ollama doit tourner sur `http://localhost:11434` (service lancé par l'installeur). Autre modèle : Réglages → Modèles.
+
+### Anthropic / OpenAI (ta propre clé)
+
+Réglages → Clés API → colle la clé → Enregistrer, puis choisis le fournisseur.
+La clé va dans le trousseau système (Secret Service sous Fedora, Gestionnaire d'identifiants sous Windows). Le code JavaScript ne peut jamais la relire : seul Rust l'ajoute aux requêtes, et uniquement vers `api.anthropic.com` / `api.openai.com`.
+
+Modèle Anthropic par défaut : `claude-opus-5-5`. `claude-haiku-5-5` coûte environ 40× moins cher et suffit pour cette tâche.
+
+Test du prompt contre Ollama (optionnel) : `LIVE_OLLAMA=1 npx vitest run ollama.live`.
+
 ## Démarrage automatique
 
 Activé automatiquement au premier lancement d'un **build de release** (pas en dev) :
@@ -113,4 +139,4 @@ Activé automatiquement au premier lancement d'un **build de release** (pas en d
 - Windows : `%APPDATA%\com.henri.lifeos\`
 - Fedora : `~/.local/share/com.henri.lifeos/`
 
-Contenu : `lifeos.db` (SQLite) et `notes/` (fichiers Markdown).
+Contenu : `lifeos.db` (SQLite), `notes/` (fichiers Markdown), `settings.json` (réglages non sensibles). Les clés API sont dans le trousseau système, pas dans ce dossier.

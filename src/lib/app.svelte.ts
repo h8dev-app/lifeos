@@ -5,9 +5,18 @@
 import { listCategories } from "./db/categories";
 import { listRecentEntries, type RecentEntry } from "./db/entries";
 import { listTasks, type Task } from "./db/tasks";
-import type { Category } from "./types";
+import type { Category, EntryData } from "./types";
+import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
 
-export type View = "dashboard" | "tasks" | "notes";
+export type View = "dashboard" | "tasks" | "notes" | "settings";
+
+/** Entry proposed by the AI, waiting for the user's confirmation. */
+export interface PendingEntry {
+  categoryId: string;
+  data: EntryData;
+  occurredAt: string;
+  text: string;
+}
 export type ToastKind = "ok" | "error" | "info";
 
 export const app = $state({
@@ -18,6 +27,9 @@ export const app = $state({
   /** Note to open when the Notes view shows (set by `/note <titre>`). */
   openNoteId: null as string | null,
   toast: { message: "", kind: "info" as ToastKind },
+  settings: { ...DEFAULT_SETTINGS } as Settings,
+  pending: null as PendingEntry | null,
+  aiBusy: false,
 });
 
 export function say(message: string, kind: ToastKind = "info") {
@@ -40,4 +52,8 @@ export async function guard<T>(action: () => Promise<T>): Promise<T | undefined>
     say(`Erreur : ${e}`, "error");
     return undefined;
   }
+}
+
+export async function reloadSettings() {
+  app.settings = await loadSettings();
 }

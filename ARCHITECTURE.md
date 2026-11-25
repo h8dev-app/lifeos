@@ -38,10 +38,15 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src/lib/dates.ts` | Local dates, French date words for `@échéance` (tested) |
 | `src/lib/parsing/task.ts` | `/tache` arguments (tested) |
 | `src/lib/notes/markdown.ts` | Note title, file name, FTS query, hash (tested) |
+| `src-tauri/src/secrets.rs` | Keyring: `secret_set` / `secret_delete` / `secret_exists` (no read command) |
+| `src-tauri/src/secure_fetch.rs` | HTTPS with a keyring secret, 3 allowed hosts, each tied to one secret (tested) |
+| `src/lib/ai/` | `provider.ts` (interface), `ollama.ts`, `anthropic.ts`, `openai.ts`, `registry.ts`, `prompt.ts`, `entrySchema.ts` (tested) |
+| `src/lib/settings.ts` | Non-sensitive settings (store plugin, `settings.json`) |
+| `src/lib/secrets.ts` | TS side of the keyring + `secureFetch` |
 | `src/lib/app.svelte.ts` | Shared UI state (runes): view, categories, entries, tasks, toast |
 | `src/lib/format.ts` | French display of entry values |
 | `src/components/` | `CommandBar`, `Nav`, `RecentEntries`, `CategoryChips`, `TaskList`, `NoteEditor`, `Toast` |
-| `src/views/` | `Dashboard`, `Tasks`, `Notes` |
+| `src/views/` | `Dashboard`, `Tasks`, `Notes`, `Settings` |
 | `src/lib/clock.ts` | Date/time formatting (tested) |
 
 ## User data location
@@ -107,6 +112,38 @@ the AI with a preview and confirmation (milestone 4).
 - **Shipped with the app**: add a row in a new migration, same JSON format as
   `0002_seed.sql`.
 
+## AI for free text
+
+```
+free text ─► provider.parseEntry(text, categories)
+               ├─ buildSystemPrompt (categories, fields, units, current time)
+               ├─ backend.complete(system, text, buildResponseSchema)  ← strict JSON schema
+               └─ validateAiEntry: zod + unit conversion + date check
+            ─► EntryPreview (Enter = save with source 'ai', Escape = cancel)
+```
+
+- The answer shape is fixed (`category`, `occurred_at`, `fields: [{key, value}]`)
+  so one strict schema works for every provider and category.
+- Values are converted with the same unit parsers as slash commands; unknown
+  keys or bad values go to `note`. Dates in the future or older than 30 days → now.
+- Ollama is called from the webview through `tauri-plugin-http` (CORS), scope
+  `localhost:11434` only. Anthropic/OpenAI go through `secure_fetch` in Rust.
+
+### Adding an AI provider
+
+1. `src/lib/ai/<name>.ts`: `makeProvider({ id, label, status, complete })`.
+   `complete(system, user, schema)` returns the raw JSON text.
+2. Add a case in `registry.ts` and the id in `ProviderId` (`settings.ts`).
+3. If it needs a key: add the secret name in `secrets.rs` (`ALLOWED`) and the
+   host/secret pair in `secure_fetch.rs`, then a field in the Settings view.
+
+## Security of API keys
+
+- Keys are written once from the Settings view, then only Rust reads them.
+- `secure_fetch` refuses non-https URLs, other hosts, and a secret sent to the
+  wrong host (`api.openai.com` never receives the Anthropic key).
+- Keys never go to SQLite, `settings.json` or logs.
+
 ## Coming next
 
-Adding an AI provider is documented here at milestone 4. Full plan: `docs/`.
+Milestone 5: ActivityWatch + GitHub + Activity view. Full plan: `docs/`.

@@ -1,11 +1,14 @@
 //! LifeOS backend entry point.
 //!
 //! Rust is kept small on purpose: it only does what the webview cannot do
-//! (system tray, global shortcut, single instance, autostart, SQLite setup).
+//! (system tray, global shortcut, single instance, autostart, SQLite setup,
+//! keyring secrets and HTTPS calls that need an API key).
 //! All app logic lives in TypeScript under `src/`.
 
 mod db;
 mod overlay;
+mod secrets;
+mod secure_fetch;
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -35,6 +38,11 @@ pub fn run() {
         // File access for Markdown notes. Scope limited to `<app data>/notes/`
         // in capabilities/default.json.
         .plugin(tauri_plugin_fs::init())
+        // HTTP from the webview without CORS issues (Ollama on localhost).
+        // Allowed URLs are listed in capabilities/default.json.
+        .plugin(tauri_plugin_http::init())
+        // Non-sensitive settings (provider, model names) in settings.json.
+        .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -43,7 +51,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
             overlay::overlay_hide,
-            db::db_url
+            db::db_url,
+            secrets::secret_set,
+            secrets::secret_delete,
+            secrets::secret_exists,
+            secure_fetch::secure_fetch
         ])
         .setup(|app| {
             db::setup(app)?;

@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Permissions of the overlay window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "opener:default",
@@ -13,7 +15,14 @@
     "sql:allow-execute",
     {
       "identifier": "fs:scope",
-      "allow": [{ "path": "$APPDATA/notes" }, { "path": "$APPDATA/notes/**" }]
+      "allow": [
+        {
+          "path": "$APPDATA/notes"
+        },
+        {
+          "path": "$APPDATA/notes/**"
+        }
+      ]
     },
     "fs:allow-exists",
     "fs:allow-mkdir",
@@ -21,6 +30,18 @@
     "fs:allow-read-text-file",
     "fs:allow-write-text-file",
     "fs:allow-rename",
-    "fs:allow-stat"
+    "fs:allow-stat",
+    "store:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "http://localhost:11434/*"
+        },
+        {
+          "url": "http://127.0.0.1:11434/*"
+        }
+      ]
+    }
   ]
 }

@@ -5,6 +5,7 @@
     { view: "dashboard", label: "Accueil" },
     { view: "tasks", label: "Tâches" },
     { view: "notes", label: "Notes" },
+    { view: "settings", label: "Réglages" },
   ];
 </script>
 
