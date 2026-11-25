@@ -34,9 +34,14 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src/lib/parsing/units.ts` | Duration / distance / money / number tokens (tested) |
 | `src/lib/parsing/slash.ts` | Command bar parsing + `/cat` arguments (tested) |
 | `src/lib/parsing/schema.ts` | zod validation of `fields_schema` |
-| `src/lib/db/*.ts` | SQL queries (connection, categories, entries) |
+| `src/lib/db/*.ts` | SQL queries (connection, categories, entries, tasks, notes) |
+| `src/lib/dates.ts` | Local dates, French date words for `@échéance` (tested) |
+| `src/lib/parsing/task.ts` | `/tache` arguments (tested) |
+| `src/lib/notes/markdown.ts` | Note title, file name, FTS query, hash (tested) |
+| `src/lib/app.svelte.ts` | Shared UI state (runes): view, categories, entries, tasks, toast |
 | `src/lib/format.ts` | French display of entry values |
-| `src/components/` | `CommandBar`, `RecentEntries`, `CategoryChips`, `Toast` |
+| `src/components/` | `CommandBar`, `Nav`, `RecentEntries`, `CategoryChips`, `TaskList`, `NoteEditor`, `Toast` |
+| `src/views/` | `Dashboard`, `Tasks`, `Notes` |
 | `src/lib/clock.ts` | Date/time formatting (tested) |
 
 ## User data location
@@ -73,6 +78,26 @@ tasks (…), notes (…) + notes_fts (FTS5)
 
 Slash commands are saved directly (deterministic). Free text (no `/`) goes to
 the AI with a preview and confirmation (milestone 4).
+
+## Tasks
+
+- `planned_for` (local `YYYY-MM-DD`) = the day the task is shown; "Reporter"
+  moves it to tomorrow. Undone tasks planned in the past show in "today".
+- `due_date` = optional deadline, shown red when passed.
+- The list holds open tasks + tasks done today.
+
+## Notes
+
+- The `.md` files in `<app data>/notes/` are the source of truth. `notes` and
+  `notes_fts` (FTS5) are only an index.
+- `syncNotes()` runs when the Notes view opens: new files are indexed,
+  changed files (hash) re-indexed, missing files marked deleted.
+- The file name is fixed at creation; the title comes from the first `# heading`.
+- Delete = move to `notes/.trash/` + soft delete. Nothing is erased.
+- File access is limited to `$APPDATA/notes/**` (capabilities/default.json),
+  no `remove` permission.
+- Pending edits are saved 0.6 s after typing, on blur and before Escape hides
+  the overlay (`onBeforeHide`).
 
 ## Adding a category
 

@@ -3,7 +3,7 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 2** (overlay, tray, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash).
+État : **jalon 3** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown).
 
 ## Saisie rapide
 
@@ -14,9 +14,18 @@ Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccour
 | `/cuisine pâtes carbo` | plat |
 | `/devoirs maths 45min exercices p.12` | matière, durée, note |
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
+| `/tache rendre le dossier @vendredi` | tâche du jour, échéance optionnelle |
+| `/note Réunion BTS` | crée la note et l'ouvre (`/note` seul ouvre la vue Notes) |
 
 Types de champs pour `/cat` : `texte`, `distance`, `durée`, `euros`, `nombre`.
 Survole une entrée récente pour la supprimer (×).
+
+Échéances : `@auj`, `@demain`, `@après-demain`, `@lundi`…`@dimanche` (le prochain, aujourd'hui inclus), `@28/11`, `@28/11/2026`, `@2026-11-28`.
+
+Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes.
+
+- **Tâches** : cocher, reporter à demain, supprimer. Une tâche non faite reste dans « Aujourd'hui » les jours suivants.
+- **Notes** : fichiers `.md` dans le dossier `notes/` (modifiables avec n'importe quel éditeur). Sauvegarde automatique, aperçu avec `Ctrl+E`, recherche plein texte. Une note supprimée part dans `notes/.trash/`.
 
 ## Prérequis
 
@@ -104,4 +113,4 @@ Activé automatiquement au premier lancement d'un **build de release** (pas en d
 - Windows : `%APPDATA%\com.henri.lifeos\`
 - Fedora : `~/.local/share/com.henri.lifeos/`
 
-Contenu : `lifeos.db` (SQLite). Les notes `notes/` arrivent au jalon 3.
+Contenu : `lifeos.db` (SQLite) et `notes/` (fichiers Markdown).

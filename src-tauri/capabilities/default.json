@@ -10,6 +10,17 @@
     "autostart:allow-enable",
     "autostart:allow-disable",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    {
+      "identifier": "fs:scope",
+      "allow": [{ "path": "$APPDATA/notes" }, { "path": "$APPDATA/notes/**" }]
+    },
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-rename",
+    "fs:allow-stat"
   ]
 }

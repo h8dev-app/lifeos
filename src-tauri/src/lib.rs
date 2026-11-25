@@ -32,6 +32,9 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_opener::init())
+        // File access for Markdown notes. Scope limited to `<app data>/notes/`
+        // in capabilities/default.json.
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,

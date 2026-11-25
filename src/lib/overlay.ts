@@ -9,3 +9,17 @@ export const toggleOverlay = () => invoke<void>("overlay_toggle");
 export function onOverlayShown(cb: () => void): Promise<UnlistenFn> {
   return listen("overlay://shown", cb);
 }
+
+/** Work to finish before the overlay hides (e.g. save the open note). */
+const beforeHide = new Set<() => Promise<void> | void>();
+
+export function onBeforeHide(fn: () => Promise<void> | void): () => void {
+  beforeHide.add(fn);
+  return () => beforeHide.delete(fn);
+}
+
+/** Escape key: flush pending work, then hide. */
+export async function closeOverlay(): Promise<void> {
+  await Promise.allSettled([...beforeHide].map((fn) => fn()));
+  await hideOverlay();
+}

@@ -1,6 +1,6 @@
 <script lang="ts">
   // One-line feedback above the command bar.
-  export type ToastKind = "ok" | "error" | "info";
+  import type { ToastKind } from "../lib/app.svelte";
   let { message, kind = "info" }: { message: string; kind?: ToastKind } = $props();
 </script>
 
