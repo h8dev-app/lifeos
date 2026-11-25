@@ -9,7 +9,7 @@ import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
 
-export type View = "dashboard" | "tasks" | "notes" | "activity" | "settings";
+export type View = "dashboard" | "tasks" | "notes" | "activity" | "claude" | "settings";
 
 /** Entry proposed by the AI, waiting for the user's confirmation. */
 export interface PendingEntry {
@@ -33,6 +33,8 @@ export const app = $state({
   aiBusy: false,
   /** Last GitHub sync result, shown in Settings and Activity. */
   github: null as GithubSyncState,
+  /** Claude panel: `session` changes to start a new terminal. */
+  claude: { cwd: null as string | null, running: false, session: 0, opened: false },
 });
 
 export function say(message: string, kind: ToastKind = "info") {

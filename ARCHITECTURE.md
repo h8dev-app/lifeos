@@ -40,6 +40,7 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src/lib/notes/markdown.ts` | Note title, file name, FTS query, hash (tested) |
 | `src-tauri/src/secrets.rs` | Keyring: `secret_set` / `secret_delete` / `secret_exists` (no read command) |
 | `src-tauri/src/local_fetch.rs` | HTTP to Ollama / ActivityWatch on 127.0.0.1 without `Origin` header (tested) |
+| `src-tauri/src/pty.rs` | PTY for the Claude panel: `command_exists`, `pty_spawn/write/resize/kill`, events `pty://data` / `pty://exit` (tested) |
 | `src-tauri/src/secure_fetch.rs` | HTTPS with a keyring secret, 3 allowed hosts, each tied to one secret (tested) |
 | `src/lib/ai/` | `provider.ts` (interface), `ollama.ts`, `anthropic.ts`, `openai.ts`, `registry.ts`, `prompt.ts`, `entrySchema.ts` (tested) |
 | `src/lib/activity/aggregate.ts` | ActivityWatch events → active spans, totals per app/title, timeline blocks (tested) |
@@ -52,7 +53,8 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src/lib/app.svelte.ts` | Shared UI state (runes): view, categories, entries, tasks, toast |
 | `src/lib/format.ts` | French display of entry values |
 | `src/components/` | `CommandBar`, `Nav`, `RecentEntries`, `CategoryChips`, `TaskList`, `NoteEditor`, `Toast` |
-| `src/views/` | `Dashboard`, `Tasks`, `Notes`, `Activity`, `Settings` |
+| `src/views/` | `Dashboard`, `Tasks`, `Notes`, `Activity`, `Claude`, `Settings` |
+| `src/components/Terminal.svelte`, `src/lib/pty.ts` | xterm.js terminal bound to one PTY session |
 | `src/lib/clock.ts` | Date/time formatting (tested) |
 
 ## User data location
@@ -165,6 +167,26 @@ free text ─► provider.parseEntry(text, categories)
   new pushes get `total_commits` from `/repos/{repo}/compare/{before}...{head}`.
   Username and repo/SHA are validated before building URLs.
 
+## Claude Code panel
+
+```
+/claude [dir] ─► pty_spawn(cwd, cols, rows) ─► portable-pty runs `claude` (no args)
+xterm.onData ─► pty_write          reader thread ─► "pty://data" ─► xterm.write
+ResizeObserver ─► fit ─► pty_resize         EOF ─► "pty://exit" ─► "[session terminée]"
+```
+
+- Compliance (brief §4): the program is a constant (`claude`), the command is
+  built with no argument (unit test checks argv length = 1), no headless mode,
+  no access to Claude credentials. `command_exists` only answers for `claude`.
+- `claude` is searched in PATH plus `~/.local/bin`, `~/.claude/local`,
+  `~/.npm-global/bin`, `%APPDATA%\npm` (desktop-launched apps have a short PATH).
+  On Windows a `claude.cmd` runs through `cmd.exe /c` (still no argument to claude).
+- Output is sent as UTF-8 text; incomplete multi-byte sequences are kept until
+  the next read.
+- The panel stays mounted once opened, so the session survives view changes
+  and hiding the overlay. All sessions are killed on `RunEvent::Exit`.
+- Escape inside the terminal goes to Claude; Shift+Escape closes the overlay.
+
 ## Coming next
 
-Milestone 6: Claude Code panel (xterm.js + PTY). Full plan: `docs/`.
+Milestone 7: dashboard + polish. Full plan: `docs/`.

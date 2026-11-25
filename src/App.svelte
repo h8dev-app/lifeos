@@ -9,6 +9,7 @@
   import Notes from "./views/Notes.svelte";
   import Settings from "./views/Settings.svelte";
   import Activity from "./views/Activity.svelte";
+  import Claude from "./views/Claude.svelte";
   import { GITHUB_POLL_MS } from "./lib/activity/sync";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
@@ -39,7 +40,7 @@
             case "cat": return handleCat(r.args);
             case "tache": return handleTask(r.args);
             case "note": return handleNote(r.args);
-            case "claude": say("/claude arrive au jalon 6."); return false;
+            case "claude": return handleClaude(r.args);
           }
           return false;
         case "freetext":
@@ -94,6 +95,21 @@
     bar.focus();
   }
 
+  /** `/claude [dossier]`: open the panel and start claude there (one session at a time). */
+  function handleClaude(args: string): boolean {
+    app.claude.opened = true;
+    app.view = "claude";
+    if (app.claude.running) {
+      if (args.trim()) say(`Une session tourne déjà dans ${app.claude.cwd ?? "~/projets"}. Ferme-la pour changer de dossier.`);
+      return true;
+    }
+    app.claude.cwd = args.trim() || null;
+    app.claude.session++;
+    app.claude.running = true;
+    say("");
+    return true;
+  }
+
   async function handleTask(args: string): Promise<boolean> {
     const parsed = parseTaskArgs(args);
     if ("error" in parsed) { say(parsed.error, "error"); return false; }
@@ -128,15 +144,22 @@
     return true;
   }
 
-  const VIEWS: View[] = ["dashboard", "tasks", "notes", "activity", "settings"];
+  // Once the Claude panel has been shown, keep it mounted (session survives).
+  $effect(() => { if (app.view === "claude") app.claude.opened = true; });
+
+  const VIEWS: View[] = ["dashboard", "tasks", "notes", "activity", "claude", "settings"];
 
   function onKeydown(e: KeyboardEvent) {
+    // Inside the terminal, Escape belongs to Claude (it interrupts it).
+    // Shift+Escape always closes the overlay.
+    const inTerminal = (e.target as HTMLElement | null)?.closest?.(".xterm");
+    if (e.key === "Escape" && inTerminal && !e.shiftKey) return;
     if (e.key === "Escape") {
       e.preventDefault();
       // First Escape cancels an AI proposal, the next one closes the overlay.
       if (app.pending) cancelPending();
       else closeOverlay();
-    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5"].includes(e.key)) {
+    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];
     }
@@ -156,7 +179,8 @@
     const unlisten = onOverlayShown(() => {
       say("");
       reloadTasks(); // the day may have changed while hidden
-      if (app.view !== "notes") bar.focus();
+      if (app.view === "claude") document.querySelector<HTMLElement>(".xterm-helper-textarea")?.focus();
+      else if (app.view !== "notes") bar.focus();
     });
     return () => {
       unlisten.then((f) => f());
@@ -174,7 +198,11 @@
     {:else if app.view === "tasks"}<Tasks />
     {:else if app.view === "notes"}<Notes />
     {:else if app.view === "activity"}<Activity />
-    {:else}<Settings />{/if}
+    {:else if app.view === "settings"}<Settings />{/if}
+    <!-- Kept mounted once opened, so the claude session survives view changes. -->
+    {#if app.claude.opened || app.view === "claude"}
+      <div class="panel" class:hidden={app.view !== "claude"}><Claude /></div>
+    {/if}
   </div>
   <footer>
     {#if app.pending}
@@ -185,7 +213,7 @@
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">Échap pour fermer · Ctrl+1…5 pour changer de vue</p>
+    <p class="hint">Échap pour fermer · Ctrl+1…6 pour changer de vue</p>
   </footer>
 </main>
 
@@ -197,7 +225,10 @@
     background: var(--overlay-bg);
     padding: 32px 24px 24px;
   }
-  .content { flex: 1; overflow: auto; min-height: 0; }
+  .content { flex: 1; overflow: auto; min-height: 0; display: flex; flex-direction: column; }
+  .content > :global(*) { flex-shrink: 0; }
+  .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .panel.hidden { display: none; }
   footer { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 16px; }
   .hint { margin: 0; color: var(--text-muted); font-size: 12px; }
 </style>

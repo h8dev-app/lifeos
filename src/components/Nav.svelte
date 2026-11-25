@@ -6,6 +6,7 @@
     { view: "tasks", label: "Tâches" },
     { view: "notes", label: "Notes" },
     { view: "activity", label: "Activité" },
+    { view: "claude", label: "Claude" },
     { view: "settings", label: "Réglages" },
   ];
 </script>

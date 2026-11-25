@@ -2,19 +2,20 @@
 //!
 //! Rust is kept small on purpose: it only does what the webview cannot do
 //! (system tray, global shortcut, single instance, autostart, SQLite setup,
-//! keyring secrets and HTTPS calls that need an API key).
+//! keyring secrets, HTTP calls, and the pseudo-terminal of the Claude panel).
 //! All app logic lives in TypeScript under `src/`.
 
 mod db;
 mod local_fetch;
 mod overlay;
+mod pty;
 mod secrets;
 mod secure_fetch;
 
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    App, AppHandle, WindowEvent,
+    App, AppHandle, RunEvent, WindowEvent,
 };
 
 /// CLI flag that shows/hides the overlay of the running instance.
@@ -46,6 +47,7 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .manage(pty::PtyState::default())
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
             overlay::overlay_hide,
@@ -54,7 +56,12 @@ pub fn run() {
             secrets::secret_delete,
             secrets::secret_exists,
             secure_fetch::secure_fetch,
-            local_fetch::local_fetch
+            local_fetch::local_fetch,
+            pty::command_exists,
+            pty::pty_spawn,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_kill
         ])
         .setup(|app| {
             db::setup(app)?;
@@ -75,8 +82,14 @@ pub fn run() {
                 let _ = window.hide();
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running LifeOS");
+        .build(tauri::generate_context!())
+        .expect("error while building LifeOS")
+        .run(|app, event| {
+            // Quitting LifeOS also stops any `claude` started in the panel.
+            if let RunEvent::Exit = event {
+                pty::kill_all(app);
+            }
+        });
 }
 
 /// Tray icon: left click toggles the overlay, the menu offers Show/Quit.

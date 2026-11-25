@@ -3,7 +3,7 @@
 Application de bureau local-first (Tauri v2 + Svelte 5) qui suit habitudes, tâches, notes et activité.
 Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccourci ; `Échap` la ferme.
 
-État : **jalon 5** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub).
+État : **jalon 6** (overlay, raccourci, `--toggle`, CI, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub, panneau Claude Code).
 
 ## Saisie rapide
 
@@ -16,15 +16,25 @@ Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccour
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
 | `/tache rendre le dossier @vendredi` | tâche du jour, échéance optionnelle |
 | `/note Réunion BTS` | crée la note et l'ouvre (`/note` seul ouvre la vue Notes) |
+| `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
 
 Types de champs pour `/cat` : `texte`, `distance`, `durée`, `euros`, `nombre`.
 Survole une entrée récente pour la supprimer (×).
 
 Échéances : `@auj`, `@demain`, `@après-demain`, `@lundi`…`@dimanche` (le prochain, aujourd'hui inclus), `@28/11`, `@28/11/2026`, `@2026-11-28`.
 
-Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Activité, `Ctrl+5` Réglages.
+Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Activité, `Ctrl+5` Claude, `Ctrl+6` Réglages.
 
 - **Activité** : temps actif par application (clic = détail par titre de fenêtre) et fil de la journée qui mélange saisies, pushs GitHub et activité. `←` / `→` pour changer de jour.
+
+### Panneau Claude Code
+
+`/claude [dossier]` ou l'onglet Claude lance le CLI officiel `claude` (déjà installé par toi) en mode interactif dans un terminal intégré, comme le terminal de VS Code. C'est toi qui tapes.
+
+- Dans le terminal, `Échap` va à Claude (pour l'interrompre). `Maj+Échap` ferme l'overlay ; la session continue en fond.
+- Changer de vue ou masquer l'overlay ne coupe pas la session. « Fermer la session » ou quitter LifeOS l'arrête.
+- LifeOS ne lance que `claude` sans argument (jamais `-p` ni mode headless) et ne lit aucun identifiant Claude.
+- Si `claude` est introuvable : message avec le lien d'installation officiel.
 
 ### Texte libre (IA)
 
