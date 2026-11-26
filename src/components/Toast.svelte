@@ -5,7 +5,7 @@
 </script>
 
 {#if message}
-  <p class="toast {kind}" role="status">{message}</p>
+  <p class="toast glass-strong {kind}" role="status">{message}</p>
 {/if}
 
 <style>
@@ -13,9 +13,8 @@
     margin: 0;
     max-width: min(760px, 100%);
     padding: 6px 12px;
-    border-radius: 8px;
+    border-radius: 999px;
     font-size: 14px;
-    background: var(--surface);
     color: var(--text-muted);
   }
   .ok { color: var(--ok); }

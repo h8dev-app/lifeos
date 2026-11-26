@@ -90,7 +90,7 @@
 <div class="term" bind:this={host}></div>
 
 <style>
-  .term { flex: 1; min-height: 0; padding: 8px; background: rgba(0, 0, 0, 0.55); border: 1px solid var(--border); border-radius: var(--radius); }
+  .term { flex: 1; min-height: 0; padding: 8px; background: rgba(6, 8, 14, 0.62); border: 1px solid var(--glass-border); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim); border-radius: var(--radius); }
   .term :global(.xterm) { height: 100%; }
   .term :global(.xterm-viewport) { background: transparent !important; }
   .error { color: var(--error); margin: 0 0 8px; }

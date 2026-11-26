@@ -1,18 +1,28 @@
 /* Design tokens. Change colors here, never inline in components. */
 :root {
-  /* Overlay background: opacity set from Réglages (applyOverlayOpacity). */
-  --overlay-bg: rgba(12, 14, 20, 0.6);
-  /* Home screen blocks: darker than the background, stays readable over the desktop. */
-  --card-bg: rgba(16, 19, 27, 0.72);
-  --surface: rgba(255, 255, 255, 0.06);
-  --surface-strong: rgba(255, 255, 255, 0.1);
-  --border: rgba(255, 255, 255, 0.14);
+  /* Background: desktop wallpaper (wallpaper.ts) under a dark veil (Réglages). */
+  --wallpaper: none;
+  --overlay-tint: 0.35;
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-strong: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.16);
+
+  /* Liquid glass: translucent, blurred panels with a light rim. */
+  /* Light sheen over a dark tint: text stays readable on bright wallpapers. */
+  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.06)),
+    rgba(12, 14, 22, 0.45);
+  --glass-bg-strong: linear-gradient(145deg, rgba(44, 48, 64, 0.78), rgba(22, 25, 36, 0.72));
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+    inset 1px 0 0 rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  --glass-filter: blur(26px) saturate(170%);
   --text: #eef0f5;
-  --text-muted: #9aa1b2;
+  --text-muted: #b3b9c9;
   --accent: #7aa2ff;
   --ok: #4ade80;
   --error: #f87171;
-  --radius: 12px;
+  --radius: 18px;
   --font: system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
 }
@@ -39,4 +49,31 @@ option,
 optgroup {
   background: #ffffff;
   color: #14161c;
+}
+
+/*
+ * Liquid glass panel. `.glass` for large panels (blurs what is behind),
+ * `.glass-strong` for dialogs and pop-ups (darker, text must stay readable).
+ * Small items inside use the plain --surface colors: nesting blurs is costly.
+ */
+.glass,
+.glass-strong {
+  position: relative;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-rim), var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+.glass { background: var(--glass-bg); }
+.glass-strong { background: var(--glass-bg-strong); }
+/* Specular highlight in the top-left corner. */
+.glass::before,
+.glass-strong::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1; /* behind the content: backdrop-filter makes the panel a stacking context */
+  background: radial-gradient(120% 60% at 10% 0%, rgba(255, 255, 255, 0.14), transparent 55%);
 }

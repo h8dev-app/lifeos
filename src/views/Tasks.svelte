@@ -180,7 +180,7 @@
 
   <div class="columns">
     {#each STATUSES as col (col.id)}
-      <div class="column" class:drop={dropTarget === col.id} role="list" aria-label={col.label}
+      <div class="column glass" class:drop={dropTarget === col.id} role="list" aria-label={col.label}
         ondragover={(e) => { e.preventDefault(); dropTarget = col.id; }}
         ondragleave={(e) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) dropTarget = null; }}
         ondrop={(e) => drop(e, col.id)}>
@@ -268,7 +268,7 @@
   .columns { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 14px; flex: 1; min-height: 0; }
   .column {
     display: flex; flex-direction: column; min-height: 0;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px;
+    border-radius: var(--radius); padding: 10px;
     transition: border-color 0.1s, background 0.1s;
   }
   .column.drop { border-color: var(--accent); background: rgba(122, 162, 255, 0.08); }
@@ -281,7 +281,7 @@
   .empty { color: var(--text-muted); font-size: 13px; text-align: center; margin: 16px 0; }
   .selbar {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px;
-    background: #161a24; border: 1px solid var(--accent); border-radius: var(--radius);
+    background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--accent); border-radius: var(--radius);
   }
   .selbar .sep { width: 1px; height: 20px; background: var(--border); }
   .selbar :global(.trigger) { font-size: 13px; padding: 5px 10px; }

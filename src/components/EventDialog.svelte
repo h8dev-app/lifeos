@@ -140,8 +140,8 @@
     display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh;
   }
   .dialog {
-    width: min(480px, calc(100% - 32px)); background: #161a24; border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    width: min(480px, calc(100% - 32px)); background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--glass-rim), 0 20px 60px rgba(0, 0, 0, 0.5);
     max-height: 85vh; overflow: auto;
   }
   form { display: flex; flex-direction: column; gap: 8px; }

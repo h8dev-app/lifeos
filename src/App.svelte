@@ -17,6 +17,7 @@
   import { atMinutes, defaultReminder, formatMinutes, parseEventArgs, type EventKind } from "./lib/agenda/agenda";
   import { createEvent } from "./lib/db/events";
   import { GITHUB_POLL_MS } from "./lib/activity/sync";
+  import { loadWallpaper } from "./lib/wallpaper";
   import { autoReviewIfDue, generateReview, weekFromArgs, type ReviewResult } from "./lib/review/generate";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
@@ -259,6 +260,8 @@
     remindTick();
     const reminderTimer = setInterval(remindTick, REMINDER_INTERVAL_MS);
     reloadNoteFolders().catch(() => {});
+    const wallpaper = () => loadWallpaper().catch((e) => console.error("wallpaper", e));
+    wallpaper();
     const dataReady = Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
@@ -267,6 +270,7 @@
     // Rust emits this each time the overlay appears.
     const unlisten = onOverlayShown(() => {
       say("");
+      wallpaper(); // it may have changed while hidden
       reloadTasks(); // the day may have changed while hidden
       autoReview(); // a new week may have started while LifeOS kept running
       if (app.view === "claude") document.querySelector<HTMLElement>(".xterm-helper-textarea")?.focus();
@@ -288,6 +292,7 @@
     onclose={() => { app.help = null; bar.focus(); }} />
 {/if}
 
+<div class="bg" aria-hidden="true"></div>
 <main>
   <Nav />
   <div class="content">
@@ -320,10 +325,20 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--overlay-bg);
+    position: relative;
+    /* Keeps loose text (hints, toolbars) readable on bright wallpapers. */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
     padding: 20px 24px 16px;
   }
   /* Fixed page: views fit the window and scroll inside their own panels. */
+  /* Wallpaper (or a gradient) under a dark veil, set from Réglages. */
+  .bg {
+    position: fixed; inset: 0;
+    background: var(--wallpaper) center / cover no-repeat,
+      radial-gradient(circle at 20% 20%, #2b3a67, transparent 50%),
+      radial-gradient(circle at 80% 70%, #5b2a5e, transparent 50%), #0c0e14;
+  }
+  .bg::after { content: ""; position: absolute; inset: 0; background: rgba(6, 8, 14, var(--overlay-tint)); }
   .content { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
   .content > :global(*) { flex: 1; min-height: 0; }
   .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }

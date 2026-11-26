@@ -12,7 +12,7 @@
   ];
 </script>
 
-<nav>
+<nav class="glass">
   {#each TABS as tab, i (tab.view)}
     <button class:active={app.view === tab.view} onclick={() => (app.view = tab.view)} title="Ctrl+{i + 1}">
       {tab.label}
@@ -21,11 +21,11 @@
 </nav>
 
 <style>
-  nav { display: flex; justify-content: center; gap: 4px; margin-bottom: 16px; flex-shrink: 0; }
+  nav { display: flex; justify-content: center; gap: 4px; margin: 0 auto 16px; flex-shrink: 0; padding: 5px; border-radius: 999px; }
   button {
     background: none; border: 1px solid transparent; border-radius: 999px;
     color: var(--text-muted); padding: 5px 14px; cursor: pointer; font: inherit; font-size: 14px;
   }
   button:hover { color: var(--text); }
-  .active { color: var(--text); background: var(--surface); border-color: var(--border); }
+  .active { color: var(--text); background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
 </style>

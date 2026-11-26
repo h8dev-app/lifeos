@@ -43,7 +43,7 @@
   const isToday = $derived(day === today());
 </script>
 
-<section>
+<section class="glass">
   <div class="daynav">
     <button onclick={() => (day = addDays(day, -1))} aria-label="Jour précédent">←</button>
     <h2>{formatDay(day)}</h2>
@@ -114,7 +114,7 @@
 </section>
 
 <style>
-  section { max-width: 1200px; width: 100%; margin: 0 auto; height: 100%; overflow: auto; padding: 0 8px 16px; }
+  section { max-width: 1200px; width: 100%; margin: 0 auto; height: 100%; overflow: auto; padding: 4px 24px 24px; border-radius: var(--radius); }
   .daynav { display: flex; align-items: center; justify-content: center; gap: 16px; }
   .daynav h2 { margin: 0; font-weight: 400; font-size: 20px; min-width: 180px; text-align: center; }
   .daynav button {

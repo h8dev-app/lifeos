@@ -81,18 +81,18 @@
   }
 </script>
 
-<section>
+<section class="glass">
   <h2>Apparence</h2>
   <div class="grid">
-    <label for="opacity">Opacité du fond</label>
+    <label for="opacity">Voile sombre</label>
     <div class="range">
-      <input id="opacity" type="range" min="0.2" max="1" step="0.05" value={app.settings.overlayOpacity}
+      <input id="opacity" type="range" min="0" max="0.95" step="0.05" value={app.settings.overlayOpacity}
         oninput={(e) => applyOverlayOpacity(Number(e.currentTarget.value))}
         onchange={(e) => set("overlayOpacity", Number(e.currentTarget.value))} />
       <span>{Math.round(app.settings.overlayOpacity * 100)} %</span>
     </div>
   </div>
-  <p class="hint">Plus bas, on voit mieux le bureau derrière LifeOS. Les blocs de l'accueil gardent un fond plus sombre pour rester lisibles.</p>
+  <p class="hint">LifeOS affiche ton fond d'écran derrière ses panneaux en verre. À 0 %, le fond d'écran est net ; plus haut, il est assombri. Un nouveau fond d'écran est repris à la prochaine ouverture.</p>
 
   <h2>Démarrage</h2>
   <label class="check">
@@ -173,7 +173,7 @@
 </section>
 
 <style>
-  section { width: min(760px, 100%); margin: 0 auto; height: 100%; overflow: auto; padding: 0 8px 16px; }
+  section { width: min(760px, 100%); margin: 0 auto; height: 100%; overflow: auto; padding: 4px 24px 24px; border-radius: var(--radius); }
   .range { display: flex; align-items: center; gap: 12px; }
   .range input { flex: 1; accent-color: var(--accent); }
   .range span { color: var(--text-muted); font-size: 13px; min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }

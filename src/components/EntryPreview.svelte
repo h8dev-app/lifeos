@@ -13,7 +13,7 @@
 </script>
 
 {#if category}
-  <div class="preview" role="dialog" aria-label="Aperçu de l'entrée proposée par l'IA">
+  <div class="preview glass-strong" role="dialog" aria-label="Aperçu de l'entrée proposée par l'IA">
     <p class="src">« {entry.text} »</p>
     <div class="row">
       <span class="dot" style:background={category.color ?? "var(--text-muted)"}></span>
@@ -32,7 +32,6 @@
   .preview {
     width: min(760px, 100%);
     padding: 12px 16px;
-    background: var(--surface-strong);
     border: 1px solid var(--accent);
     border-radius: var(--radius);
     display: flex; flex-direction: column; gap: 8px;

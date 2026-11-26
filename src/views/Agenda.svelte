@@ -220,7 +220,7 @@
   </div>
 
   {#if mode === "week"}
-    <div class="week">
+    <div class="week glass">
       <!-- Day headers + all-day row -->
       <div class="head">
         <div class="gutter"></div>
@@ -293,7 +293,7 @@
       </div>
     </div>
   {:else}
-    <div class="month">
+    <div class="month glass">
       {#each DAY_NAMES as n (n)}<div class="mname">{n}</div>{/each}
       {#each month as row, w (w)}
         {#each row as d (d)}
@@ -338,7 +338,7 @@
   .grow { flex: 1; }
 
   /* week */
-  .week { display: flex; flex-direction: column; flex: 1; min-height: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .week { display: flex; flex-direction: column; flex: 1; min-height: 0; border-radius: var(--radius); overflow: hidden; }
   .head { display: grid; grid-template-columns: 48px repeat(7, 1fr); border-bottom: 1px solid var(--border); }
   .dayhead { border-left: 1px solid var(--border); min-width: 0; }
   .dayhead.today .daylabel { color: var(--accent); font-weight: 700; }
@@ -379,7 +379,7 @@
   .now { position: absolute; left: 0; right: 0; height: 2px; background: var(--error); pointer-events: none; }
 
   /* month */
-  .month { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: auto; gap: 4px; flex: 1; min-height: 0; overflow: auto; }
+  .month { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: auto; gap: 4px; flex: 1; min-height: 0; overflow: auto; padding: 8px; border-radius: var(--radius); }
   .mname { text-align: center; color: var(--text-muted); font-size: 12px; padding: 4px; }
   .cell {
     display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 96px; text-align: left;

@@ -125,8 +125,8 @@
     position: absolute; top: calc(100% + 4px); left: 0; z-index: 30;
     min-width: 100%; max-width: 320px; max-height: 260px; overflow: auto;
     margin: 0; padding: 4px; list-style: none;
-    background: #1b2030; border: 1px solid var(--border); border-radius: 10px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: var(--glass-rim), 0 12px 32px rgba(0, 0, 0, 0.5);
   }
   .menu.up { top: auto; bottom: calc(100% + 4px); }
   li {

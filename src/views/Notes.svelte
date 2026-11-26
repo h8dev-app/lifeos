@@ -130,7 +130,7 @@
 </script>
 
 <div class="notes">
-  <aside>
+  <aside class="glass">
     <button class="new" onclick={() => (creating = true)}>＋ Nouvelle note</button>
     <input class="search" placeholder="Rechercher dans les notes…" bind:value={search} aria-label="Rechercher" />
 
@@ -159,7 +159,7 @@
     </nav>
   </aside>
 
-  <main>
+  <main class="glass">
     {#if open}
       {#key open.id}
         <NoteEditor note={open} {folders} {onsaved}
@@ -221,7 +221,7 @@
 
 <style>
   .notes { display: grid; grid-template-columns: 240px 1fr; gap: 24px; height: 100%; max-width: 1280px; width: 100%; margin: 0 auto; min-height: 0; }
-  aside { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+  aside { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; padding: 14px; border-radius: var(--radius); }
   .new {
     background: var(--accent); color: #0c0e14; border: none; border-radius: 8px;
     padding: 9px 12px; font: inherit; font-weight: 600; cursor: pointer;
@@ -244,7 +244,7 @@
   .cat.add { color: var(--text-muted); font-size: 13px; }
   .n { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .muted { color: var(--text-muted); }
-  main { min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: auto; }
+  main { min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: auto; padding: 16px; border-radius: var(--radius); }
   h2 { margin: 0 0 14px; font-size: 18px; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
   .card {
@@ -262,7 +262,7 @@
   .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .selbar {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px;
-    background: #161a24; border: 1px solid var(--accent); border-radius: var(--radius);
+    background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--accent); border-radius: var(--radius);
   }
   .selbar :global(.trigger) { font-size: 13px; padding: 5px 10px; }
   .selbar button {

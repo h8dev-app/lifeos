@@ -12,8 +12,8 @@
   import { onEscape } from "../lib/overlay";
   import { loadDashboardLayout, saveDashboardLayout } from "../lib/settings";
   import {
-    addWidget, COLS, DEFAULT_LAYOUT, normalizeLayout, place, removeWidget, ROWS, WIDGET_IDS, WIDGETS,
-    type Placement, type WidgetId,
+    addWidget, bringToFront, clampRect, defaultLayout, dragRect, normalizeLayout, removeWidget,
+    snapRect, updateRect, WIDGET_IDS, WIDGETS, type Handle, type MinSize, type Rect, type WidgetId,
   } from "../lib/dashboard/layout";
 
   let now = $state(new Date());
@@ -36,9 +36,11 @@
   }
 
   // ------------------------------------------------------------ layout
-  let layout = $state<Placement[]>(DEFAULT_LAYOUT.map((p) => ({ ...p })));
+  // Free placement: rectangles in fractions of the home area, overlap
+  // allowed, last touched on top. Layout mode (⚙ Disposer) to edit.
+  let layout = $state<Rect[]>(defaultLayout());
   let editing = $state(false);
-  let grid: HTMLDivElement;
+  let area: HTMLDivElement;
 
   onMount(() => {
     loadDashboardLayout().then((raw) => { if (raw !== undefined && raw !== null) layout = normalizeLayout(raw); })
@@ -47,82 +49,81 @@
     return onEscape(() => { if (!editing) return false; editing = false; drag = null; return true; });
   });
 
-  function commit(next: Placement[]) {
+  function commit(next: Rect[]) {
     layout = next;
     guard(() => saveDashboardLayout($state.snapshot(next)));
   }
 
-  const hidden = $derived(WIDGET_IDS.filter((id) => !layout.some((p) => p.id === id)));
+  const hidden = $derived(WIDGET_IDS.filter((id) => !layout.some((r) => r.id === id)));
+  /**
+   * DOM order never changes while dragging (moving a node would drop its
+   * pointer capture); stacking comes from z-index = position in `layout`.
+   */
+  const ordered = $derived(WIDGET_IDS.filter((id) => layout.some((r) => r.id === id)));
+  const zOf = (id: WidgetId) => layout.findIndex((r) => r.id === id) + 1;
 
-  function add(id: WidgetId) {
-    const next = addWidget(layout, id);
-    if (next) commit(next);
-    else say(`Pas de place pour « ${WIDGETS[id].label} » : réduis ou masque un bloc.`, "error");
+  /** Minimum size of a widget in fractions of the current home area. */
+  function minOf(id: WidgetId): MinSize {
+    const box = area.getBoundingClientRect();
+    return { w: WIDGETS[id].minW / Math.max(box.width, 1), h: WIDGETS[id].minH / Math.max(box.height, 1) };
   }
 
-  function reset() {
-    commit(DEFAULT_LAYOUT.map((p) => ({ ...p })));
-  }
-
-  // Drag (move) and resize with the pointer, snapped to grid cells. While
-  // dragging, `preview` shows where everything would go; null = no room.
-  type Drag = { id: WidgetId; mode: "move" | "resize"; startX: number; startY: number; start: Placement; target: Placement };
+  // Pointer drag: move from anywhere on the block, resize from the right
+  // edge, the bottom edge or the corner. Edges stick to nearby edges
+  // (hold Alt to place freely without the magnet).
+  type Drag = { id: WidgetId; handle: Handle; startX: number; startY: number; start: Rect; min: MinSize };
   let drag = $state<Drag | null>(null);
-  const preview = $derived(drag ? place(layout, drag.target) : null);
-  const shown = $derived(drag && preview ? preview : layout);
 
-  function begin(e: PointerEvent, p: Placement, mode: Drag["mode"]) {
+  function begin(e: PointerEvent, r: Rect, handle: Handle) {
     if (!editing || e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    drag = { id: p.id, mode, startX: e.clientX, startY: e.clientY, start: { ...p }, target: { ...p } };
+    drag = { id: r.id, handle, startX: e.clientX, startY: e.clientY, start: { ...r }, min: minOf(r.id) };
+    layout = bringToFront(layout, r.id);
   }
 
   function moveTo(e: PointerEvent) {
     if (!drag) return;
-    const rect = grid.getBoundingClientRect();
-    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
-    const dx = Math.round((e.clientX - drag.startX) / ((rect.width + gap) / COLS));
-    const dy = Math.round((e.clientY - drag.startY) / ((rect.height + gap) / ROWS));
-    const s = drag.start;
-    const target = drag.mode === "move"
-      ? { ...s, x: s.x + dx, y: s.y + dy }
-      : { ...s, w: s.w + dx, h: s.h + dy };
-    if (target.x !== drag.target.x || target.y !== drag.target.y || target.w !== drag.target.w || target.h !== drag.target.h) {
-      drag.target = target;
-    }
+    const box = area.getBoundingClientRect();
+    const dx = (e.clientX - drag.startX) / box.width;
+    const dy = (e.clientY - drag.startY) / box.height;
+    let next = dragRect(drag.start, drag.handle, dx, dy, drag.min);
+    if (!e.altKey) next = clampRect(snapRect(next, layout, drag.handle, 8 / box.width), drag.min);
+    layout = updateRect(layout, next);
   }
 
   function end() {
     if (!drag) return;
-    const next = preview;
-    const changed = next && JSON.stringify(next) !== JSON.stringify(layout);
     drag = null;
-    if (changed) commit(next);
+    commit(layout);
   }
 
-  /** Keyboard in layout mode: arrows move, Shift+arrows resize. */
-  function onkey(e: KeyboardEvent, p: Placement) {
+  /** Layout mode keyboard: arrows move, Shift+arrows resize (1 %, Ctrl: 5 %). */
+  function onkey(e: KeyboardEvent, r: Rect) {
     if (!editing) return;
     const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
     if (!d) return;
     e.preventDefault();
-    const target = e.shiftKey ? { ...p, w: p.w + d[0], h: p.h + d[1] } : { ...p, x: p.x + d[0], y: p.y + d[1] };
-    const next = place(layout, target);
-    if (next) commit(next);
+    const step = e.ctrlKey ? 0.05 : 0.01;
+    const next = e.shiftKey
+      ? dragRect(r, "se", d[0] * step, d[1] * step, minOf(r.id))
+      : dragRect(r, "move", d[0] * step, d[1] * step, minOf(r.id));
+    commit(updateRect(layout, next));
   }
+
+  const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
 </script>
 
 <div class="dash" class:editing>
   <div class="tools">
     {#if editing}
-      <span class="lbl">Glisse un bloc pour le déplacer, son coin ◢ pour le redimensionner.</span>
+      <span class="lbl">Glisse un bloc où tu veux · bords et coin pour la taille · Alt sans aimant</span>
       {#each hidden as id (id)}
-        <button class="chip" onclick={() => add(id)}>+ {WIDGETS[id].label}</button>
+        <button class="chip" onclick={() => commit(addWidget(layout, id))}>+ {WIDGETS[id].label}</button>
       {/each}
       <span class="grow"></span>
-      <button class="ghost" onclick={reset}>Réinitialiser</button>
+      <button class="ghost" onclick={() => commit(defaultLayout())}>Réinitialiser</button>
       <button class="primary" onclick={() => (editing = false)}>Terminé</button>
     {:else}
       <span class="grow"></span>
@@ -130,64 +131,62 @@
     {/if}
   </div>
 
-  <div class="grid" bind:this={grid} style:--cols={COLS} style:--rows={ROWS}>
-    {#if editing}
-      {#each Array(COLS * ROWS) as _, i (i)}<div class="cell" style:grid-column={(i % COLS) + 1} style:grid-row={Math.floor(i / COLS) + 1}></div>{/each}
-    {/if}
+  <div class="area" bind:this={area}>
     {#if layout.length === 0 && !editing}
       <p class="empty-all">Accueil vide. <button class="link" onclick={() => (editing = true)}>Ajouter des blocs</button></p>
     {/if}
-    {#each shown as p (p.id)}
+    {#each ordered as id (id)}
+      {@const r = layout.find((o) => o.id === id)!}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
       <section
-        class="w w-{p.id}"
-        class:dragging={drag?.id === p.id}
-        class:blocked={drag?.id === p.id && !preview}
-        style:grid-column="{p.x + 1} / span {p.w}"
-        style:grid-row="{p.y + 1} / span {p.h}"
+        class="w w-{r.id} glass"
+        class:dragging={drag?.id === r.id}
+        style:left={pct(r.x)} style:top={pct(r.y)} style:width={pct(r.w)} style:height={pct(r.h)}
+        style:z-index={zOf(r.id)}
         tabindex={editing ? 0 : undefined}
-        aria-label={editing ? `${WIDGETS[p.id].label} : flèches pour déplacer, Maj+flèches pour redimensionner` : undefined}
-        onpointerdown={(e) => begin(e, p, "move")}
+        aria-label={editing ? `${WIDGETS[r.id].label} : flèches pour déplacer, Maj+flèches pour redimensionner` : undefined}
+        onpointerdown={(e) => begin(e, r, "move")}
         onpointermove={moveTo}
         onpointerup={end}
         onpointercancel={end}
-        onkeydown={(e) => onkey(e, p)}
+        onkeydown={(e) => onkey(e, r)}
       >
         {#if editing}
           <header class="bar">
-            <span>⠿ {WIDGETS[p.id].label}</span>
-            <button class="x" onpointerdown={(e) => e.stopPropagation()} onclick={() => commit(removeWidget(layout, p.id))}
-              aria-label="Masquer {WIDGETS[p.id].label}" title="Masquer">✕</button>
+            <button class="x" onpointerdown={(e) => e.stopPropagation()} onclick={() => commit(removeWidget(layout, r.id))}
+              aria-label="Masquer {WIDGETS[r.id].label}" title="Masquer">✕</button>
           </header>
         {/if}
         <div class="body">
-          {#if p.id === "clock"}
+          {#if r.id === "clock"}
             <div class="clock">
               <div class="time">{formatTime(now)}</div>
               <div class="date">{formatDate(now)}</div>
             </div>
-          {:else if p.id === "streaks"}
+          {:else if r.id === "streaks"}
             <h2>Séries</h2>
             {#if app.streaks.length}<Streaks />{:else}<p class="empty">Aucune série. Enregistre une entrée deux jours de suite.</p>{/if}
-          {:else if p.id === "agenda"}
+          {:else if r.id === "agenda"}
             <AgendaToday />
-          {:else if p.id === "tasks"}
+          {:else if r.id === "tasks"}
             <h2><button class="title" onclick={() => (app.view = "tasks")}>Tâches du jour</button></h2>
             {#if todayTasks.length}
               <TaskList tasks={todayTasks} compact />
             {:else}
               <p class="empty">Aucune tâche. <code>/tache …</code></p>
             {/if}
-          {:else if p.id === "recent"}
+          {:else if r.id === "recent"}
             <RecentEntries entries={app.recent} categories={app.categories} ondelete={remove} />
-          {:else if p.id === "activity"}
+          {:else if r.id === "activity"}
             <ActivitySummary />
           {/if}
         </div>
         {#if editing}
-          <!-- svelte-ignore a11y_no_static_element_interactions -->
-          <span class="resize" title="Redimensionner" onpointerdown={(e) => begin(e, p, "resize")}
-            onpointermove={moveTo} onpointerup={end} onpointercancel={end}>◢</span>
+          {#each ["e", "s", "se"] as const as h (h)}
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <span class="handle h-{h}" title="Redimensionner" onpointerdown={(e) => begin(e, r, h)}
+              onpointermove={moveTo} onpointerup={end} onpointercancel={end}></span>
+          {/each}
         {/if}
       </section>
     {/each}
@@ -210,35 +209,35 @@
   .tools .primary { border-color: var(--accent); color: var(--accent); }
   .tools .chip { border-style: dashed; border-radius: 999px; }
 
-  .grid {
-    flex: 1; min-height: 0; display: grid; gap: 14px;
-    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-    grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
-  }
-  .cell { border: 1px dashed rgba(255, 255, 255, 0.07); border-radius: 8px; }
-  .empty-all { grid-column: 1 / -1; grid-row: 3; text-align: center; color: var(--text-muted); }
+  .area { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .empty-all { margin: auto; color: var(--text-muted); }
   .link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; padding: 0; }
 
   .w {
-    position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column;
-    background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
-    container-type: size;
+    position: absolute; min-width: 0; min-height: 0; display: flex; flex-direction: column;
+    border-radius: 22px; container-type: size;
   }
-  .body { flex: 1; min-height: 0; overflow: auto; padding: 4px 16px 14px; }
-  .editing .w { cursor: grab; border-style: dashed; border-color: var(--accent); user-select: none; touch-action: none; }
+  .body { position: relative; flex: 1; min-height: 0; overflow: auto; padding: 4px 18px 14px; }
+  .editing .area {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px; border-radius: var(--radius);
+  }
+  .editing .w { cursor: grab; outline: 1px dashed rgba(122, 162, 255, 0.7); outline-offset: -1px; user-select: none; touch-action: none; }
   .editing .w:focus-visible { outline: 2px solid var(--accent); }
-  .editing .body { pointer-events: none; opacity: 0.6; }
-  .w.dragging { cursor: grabbing; z-index: 2; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); }
-  .w.blocked { border-color: var(--error); }
-  .bar {
-    display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 0 14px;
-    font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;
+  .editing .body { pointer-events: none; opacity: 0.55; }
+  .w.dragging { cursor: grabbing; box-shadow: var(--glass-rim), 0 24px 60px rgba(0, 0, 0, 0.5); }
+  .bar { position: absolute; top: 6px; right: 10px; z-index: 1; }
+  .x {
+    background: rgba(12, 14, 22, 0.6); border: 1px solid var(--glass-border); border-radius: 50%;
+    width: 24px; height: 24px; color: var(--text); cursor: pointer; font-size: 11px; padding: 0;
   }
-  .x { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 2px 4px; }
   .x:hover { color: var(--error); }
-  .resize {
-    position: absolute; right: 4px; bottom: 2px; color: var(--accent); cursor: nwse-resize;
-    font-size: 14px; line-height: 1; padding: 4px; touch-action: none;
+  .handle { position: absolute; z-index: 1; touch-action: none; }
+  .h-e { top: 12px; bottom: 12px; right: -4px; width: 10px; cursor: ew-resize; }
+  .h-s { left: 12px; right: 12px; bottom: -4px; height: 10px; cursor: ns-resize; }
+  .h-se {
+    right: 2px; bottom: 2px; width: 16px; height: 16px; cursor: nwse-resize;
+    border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); border-bottom-right-radius: 14px;
   }
 
   .clock { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }

@@ -99,8 +99,8 @@
   }
   .dialog {
     width: min(760px, calc(100% - 32px)); height: min(80vh, 760px); display: flex; flex-direction: column;
-    background: #161a24; border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); outline: none;
+    background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--glass-rim), 0 20px 60px rgba(0, 0, 0, 0.5); outline: none;
   }
   header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
   h2 { margin: 0; font-size: 18px; flex: 1; }

@@ -8,6 +8,7 @@
 mod db;
 mod local_fetch;
 mod overlay;
+mod wallpaper;
 mod pty;
 mod secrets;
 mod secure_fetch;
@@ -53,6 +54,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
             overlay::overlay_hide,
+            wallpaper::wallpaper_image,
             db::db_url,
             secrets::secret_set,
             secrets::secret_delete,

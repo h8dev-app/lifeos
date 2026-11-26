@@ -137,7 +137,7 @@
   {#if open || showParams}
     <div class="popup" role="presentation">
       {#if showParams && current}
-        <div class="params">
+        <div class="params glass-strong">
           <div class="syntax"><span class="icon">{current.icon ?? ""}</span><code>{current.syntax}</code></div>
           <ul>
             {#each current.params as p (p.token)}
@@ -150,7 +150,7 @@
         </div>
       {/if}
       {#if open}
-        <ul class="list" role="listbox" aria-label="Suggestions">
+        <ul class="list glass-strong" role="listbox" aria-label="Suggestions">
           {#if ctx.kind === "command"}
             {#each commandList as c, i (c.name)}
               <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -177,7 +177,7 @@
     </div>
   {/if}
 
-  <form class="bar" onsubmit={submit}>
+  <form class="bar glass" onsubmit={submit}>
     <span class="prompt" aria-hidden="true">›</span>
     <input
       bind:this={input}
@@ -197,8 +197,7 @@
 <style>
   .wrap { position: relative; width: min(760px, 100%); }
   .bar {
-    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
-    background: var(--surface-strong); border: 1px solid var(--border); border-radius: var(--radius);
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 999px;
   }
   .bar:focus-within { border-color: var(--accent); }
   .prompt { color: var(--accent); font-size: 20px; }
@@ -215,10 +214,7 @@
     position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 20;
     display: flex; flex-direction: column; gap: 6px;
   }
-  .params, .list {
-    background: #161a24; border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  }
+  .params, .list { border-radius: var(--radius); }
   .params { padding: 12px 14px; }
   .syntax { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .syntax code { font: 14px var(--mono); color: var(--accent); }

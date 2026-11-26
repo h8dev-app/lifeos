@@ -15,7 +15,7 @@ export interface Settings {
   githubUser: string;
   /** Generate last week's review automatically from Monday. */
   weeklyReviewAuto: boolean;
-  /** Opacity of the overlay background, 0.2 (see-through) to 1 (opaque). */
+  /** Dark veil over the wallpaper, 0 (clear) to 0.95 (almost opaque). */
   overlayOpacity: number;
 }
 
@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   openaiModel: "gpt-5-mini",
   githubUser: "",
   weeklyReviewAuto: true,
-  overlayOpacity: 0.6,
+  overlayOpacity: 0.35,
 };
 
 let store: Promise<Store> | null = null;
@@ -57,15 +57,15 @@ export async function saveSetting<K extends keyof Settings>(key: K, value: Setti
 
 /** Home screen layout (raw JSON, validated by normalizeLayout). */
 export async function loadDashboardLayout(): Promise<unknown> {
-  return (await getStore()).get("dashboardLayout");
+  return (await getStore()).get("dashboardFree");
 }
 
 export async function saveDashboardLayout(layout: unknown): Promise<void> {
-  await (await getStore()).set("dashboardLayout", layout);
+  await (await getStore()).set("dashboardFree", layout);
 }
 
-/** Apply the background opacity to the page (CSS variable). */
+/** Apply the dark veil over the wallpaper (CSS variable). */
 export function applyOverlayOpacity(opacity: number): void {
-  const o = Math.min(Math.max(opacity, 0.2), 1);
-  document.documentElement.style.setProperty("--overlay-bg", `rgba(12, 14, 20, ${o})`);
+  const o = Math.min(Math.max(opacity, 0), 0.95);
+  document.documentElement.style.setProperty("--overlay-tint", String(o));
 }

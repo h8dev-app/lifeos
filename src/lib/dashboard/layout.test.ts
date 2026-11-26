@@ -1,86 +1,89 @@
 import { describe, expect, it } from "vitest";
 import {
-  addWidget, clampPlacement, COLS, DEFAULT_LAYOUT, fits, freeSpot, normalizeLayout, overlaps, place,
-  removeWidget, ROWS, type Placement,
+  addWidget, bringToFront, clampRect, DEFAULT_LAYOUT, defaultLayout, dragRect, normalizeLayout,
+  readingOrder, removeWidget, snapRect, updateRect, type Rect,
 } from "./layout";
 
-const noOverlap = (l: Placement[]) =>
-  l.every((a, i) => l.every((b, j) => i === j || !overlaps(a, b)));
+const r = (id: Rect["id"], x: number, y: number, w: number, h: number): Rect => ({ id, x, y, w, h });
+const min = { w: 0.1, h: 0.1 };
 
-describe("layout", () => {
-  it("default layout fills the grid without overlap", () => {
-    expect(noOverlap(DEFAULT_LAYOUT)).toBe(true);
-    const area = DEFAULT_LAYOUT.reduce((s, p) => s + p.w * p.h, 0);
-    expect(area).toBe(COLS * ROWS);
+describe("free layout", () => {
+  it("default layout stays inside the area", () => {
+    for (const d of DEFAULT_LAYOUT) {
+      const c = clampRect(d);
+      for (const k of ["x", "y", "w", "h"] as const) expect(c[k]).toBeCloseTo(d[k], 6);
+    }
   });
 
-  it("overlaps only when areas intersect", () => {
-    const a = { id: "clock", x: 0, y: 0, w: 2, h: 2 } as const;
-    expect(overlaps(a, { id: "tasks", x: 2, y: 0, w: 2, h: 2 })).toBe(false);
-    expect(overlaps(a, { id: "tasks", x: 1, y: 1, w: 2, h: 2 })).toBe(true);
+  it("clamps inside the area and to the minimum size", () => {
+    expect(clampRect(r("clock", 0.95, -0.2, 0.3, 0.01), min)).toEqual(r("clock", 0.7, 0, 0.3, 0.1));
+    expect(clampRect(r("clock", 0, 0, 3, 3))).toEqual(r("clock", 0, 0, 1, 1));
   });
 
-  it("clamps inside the grid and to the minimum size", () => {
-    expect(clampPlacement({ id: "agenda", x: 11, y: -3, w: 1, h: 1 })).toEqual({ id: "agenda", x: 9, y: 0, w: 3, h: 2 });
-    expect(clampPlacement({ id: "clock", x: 0, y: 0, w: 40, h: 40 })).toEqual({ id: "clock", x: 0, y: 0, w: COLS, h: ROWS });
+  it("moves freely, anywhere, without a grid", () => {
+    const out = dragRect(r("tasks", 0.2, 0.2, 0.3, 0.3), "move", 0.137, -0.05, min);
+    expect(out.x).toBeCloseTo(0.337);
+    expect(out.y).toBeCloseTo(0.15);
+    expect(dragRect(r("tasks", 0.2, 0.2, 0.3, 0.3), "move", 5, 5, min)).toMatchObject({ x: 0.7, y: 0.7 });
   });
 
-  it("finds a free spot or null", () => {
-    expect(freeSpot([], 3, 2)).toEqual({ x: 0, y: 0 });
-    expect(freeSpot(DEFAULT_LAYOUT, 1, 1)).toBeNull();
-    expect(freeSpot(removeWidget(DEFAULT_LAYOUT, "recent"), 4, 3)).toEqual({ x: 8, y: 2 });
+  it("resizes by edge or corner, within the area and the minimum", () => {
+    const s = r("tasks", 0.5, 0.5, 0.3, 0.3);
+    expect(dragRect(s, "e", 0.1, 0.4, min)).toMatchObject({ w: 0.4, h: 0.3 });
+    expect(dragRect(s, "s", 0.4, 0.1, min)).toMatchObject({ w: 0.3, h: 0.4 });
+    expect(dragRect(s, "se", 0.9, -0.9, min)).toMatchObject({ x: 0.5, y: 0.5, w: 0.5, h: 0.1 });
   });
 
-  it("swaps two widgets of the same size", () => {
-    const out = place(DEFAULT_LAYOUT, { id: "agenda", x: 4, y: 2, w: 4, h: 6 })!;
-    expect(out.find((p) => p.id === "agenda")).toMatchObject({ x: 4, y: 2 });
-    expect(out.find((p) => p.id === "tasks")).toMatchObject({ x: 0, y: 2 });
-    expect(noOverlap(out)).toBe(true);
+  it("snaps edges to the area and to other widgets", () => {
+    const other = r("clock", 0.5, 0.1, 0.2, 0.2);
+    // Left edge near 0, top near the other's top.
+    const snapped = snapRect(r("tasks", 0.008, 0.105, 0.2, 0.2), [other], "move", 0.01);
+    expect(snapped.x).toBe(0);
+    expect(snapped.y).toBeCloseTo(0.1);
+    // Right edge near the other's left edge.
+    expect(snapRect(r("tasks", 0.295, 0.6, 0.2, 0.2), [other], "move", 0.01).x).toBeCloseTo(0.3);
+    // Far from everything: unchanged.
+    expect(snapRect(r("tasks", 0.2, 0.6, 0.2, 0.2), [other], "move", 0.01)).toMatchObject({ x: 0.2, y: 0.6 });
+    // Resize: only the dragged edge moves.
+    expect(snapRect(r("tasks", 0.1, 0.6, 0.395, 0.2), [other], "e", 0.01)).toMatchObject({ x: 0.1, w: 0.4, h: 0.2 });
   });
 
-  it("moves into empty space without touching others", () => {
-    const l = removeWidget(DEFAULT_LAYOUT, "activity");
-    const out = place(l, { id: "recent", x: 8, y: 5, w: 4, h: 3 })!;
-    expect(out.find((p) => p.id === "recent")).toMatchObject({ x: 8, y: 5 });
-    expect(out.find((p) => p.id === "tasks")).toEqual(l.find((p) => p.id === "tasks"));
+  it("allows overlap; the last touched widget is on top", () => {
+    const l = [r("clock", 0, 0, 0.5, 0.5), r("tasks", 0.2, 0.2, 0.5, 0.5)];
+    expect(bringToFront(l, "clock").map((x) => x.id)).toEqual(["tasks", "clock"]);
+    expect(bringToFront(l, "tasks")).toBe(l);
+    const moved = updateRect(l, r("clock", 0.1, 0.1, 0.5, 0.5));
+    expect(moved.map((x) => x.id)).toEqual(["tasks", "clock"]);
   });
 
-  it("refuses a move when the displaced widgets cannot fit", () => {
-    // Clock taking the whole grid leaves no room for anyone.
-    expect(place(DEFAULT_LAYOUT, { id: "clock", x: 0, y: 0, w: COLS, h: ROWS })).toBeNull();
+  it("hides and shows widgets", () => {
+    const l = removeWidget(defaultLayout(), "recent");
+    expect(l.some((x) => x.id === "recent")).toBe(false);
+    const back = addWidget(l, "recent");
+    expect(back[back.length - 1]).toEqual(DEFAULT_LAYOUT.find((x) => x.id === "recent"));
+    expect(addWidget(back, "recent")).toBe(back);
   });
 
-  it("growing a widget shrinks or moves its neighbour when there is room", () => {
-    const l = removeWidget(DEFAULT_LAYOUT, "activity"); // frees 4x3 at (8,5)
-    const out = place(l, { id: "recent", x: 8, y: 2, w: 4, h: 4 })!;
-    expect(out).not.toBeNull();
-    expect(noOverlap(out)).toBe(true);
-  });
-
-  it("adds a hidden widget only where there is room", () => {
-    expect(addWidget(DEFAULT_LAYOUT, "recent")).toBe(DEFAULT_LAYOUT); // already there
-    const l = removeWidget(DEFAULT_LAYOUT, "recent");
-    expect(addWidget(l, "recent")!.find((p) => p.id === "recent")).toEqual({ id: "recent", x: 8, y: 2, w: 4, h: 3 });
-    expect(addWidget(removeWidget(l, "activity").concat(), "recent")).not.toBeNull();
-    const full = place(removeWidget(DEFAULT_LAYOUT, "activity"), { id: "recent", x: 8, y: 2, w: 4, h: 6 })!;
-    expect(addWidget(full, "activity")).toBeNull();
+  it("reading order goes top to bottom, then left to right", () => {
+    expect(readingOrder([r("tasks", 0.5, 0.5, 0.1, 0.1), r("clock", 0.6, 0, 0.1, 0.1), r("agenda", 0, 0.5, 0.1, 0.1)])
+      .map((x) => x.id)).toEqual(["clock", "agenda", "tasks"]);
   });
 
   it("normalizes saved layouts", () => {
     expect(normalizeLayout("nope")).toEqual(DEFAULT_LAYOUT);
     expect(normalizeLayout([])).toEqual([]);
-    const out = normalizeLayout([
-      { id: "clock", x: 0, y: 0, w: 4, h: 2 },
-      { id: "clock", x: 6, y: 0, w: 4, h: 2 }, // duplicate
-      { id: "ghost", x: 0, y: 4, w: 2, h: 2 }, // unknown
-      { id: "tasks", x: 1, y: 1, w: 4, h: 4 }, // overlaps clock
-      { id: "agenda", x: "a", y: 0, w: 4, h: 4 }, // bad number
-      { id: "recent", x: 20, y: 6, w: 4, h: 3 }, // clamped inside
+    expect(normalizeLayout([
+      r("clock", 0.1, 0.1, 0.2, 0.2),
+      r("clock", 0.5, 0.5, 0.2, 0.2), // duplicate
+      { id: "ghost", x: 0, y: 0, w: 0.2, h: 0.2 }, // unknown
+      { id: "agenda", x: "a", y: 0, w: 0.2, h: 0.2 }, // bad number
+      r("tasks", 0, 0, 0, 0.2), // empty
+      r("recent", 0.9, 0.9, 0.3, 0.3), // brought back inside
+      r("activity", 0.05, 0.05, 0.3, 0.3), // overlap is fine
+    ])).toEqual([
+      r("clock", 0.1, 0.1, 0.2, 0.2),
+      r("recent", 0.7, 0.7, 0.3, 0.3),
+      r("activity", 0.05, 0.05, 0.3, 0.3),
     ]);
-    expect(out).toEqual([
-      { id: "clock", x: 0, y: 0, w: 4, h: 2 },
-      { id: "recent", x: 8, y: 5, w: 4, h: 3 },
-    ]);
-    expect(fits(out[0], out)).toBe(true);
   });
 });
