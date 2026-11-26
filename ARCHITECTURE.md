@@ -114,7 +114,8 @@ the AI with a preview and confirmation (milestone 4).
 - The card excerpt comes from the FTS body (first 600 chars, Markdown stripped).
 - Delete = move to `notes/.trash/` + soft delete. Nothing is erased.
 - File access is limited to `$APPDATA/notes/**` (capabilities/default.json),
-  no `remove` permission.
+  no `remove` permission. On Unix `**` does not match dot-folders, so
+  `notes/.trash` is listed explicitly in the scope.
 - Pending edits are saved 0.6 s after typing, on blur and before Escape hides
   the overlay (`onBeforeHide`).
 

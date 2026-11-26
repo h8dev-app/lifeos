@@ -72,7 +72,8 @@
   }
 
   async function remove(note: NoteMeta) {
-    await guard(() => deleteNote(note));
+    const ok = await guard(async () => { await deleteNote(note); return true; });
+    if (!ok) return; // the error is already shown
     openId = null;
     say("Note mise à la corbeille (notes/.trash).");
     await refresh();

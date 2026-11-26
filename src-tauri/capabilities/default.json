@@ -21,6 +21,12 @@
         },
         {
           "path": "$APPDATA/notes/**"
+        },
+        {
+          "path": "$APPDATA/notes/.trash"
+        },
+        {
+          "path": "$APPDATA/notes/.trash/**"
         }
       ]
     },
