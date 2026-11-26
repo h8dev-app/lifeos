@@ -212,6 +212,20 @@ ResizeObserver ─► fit ─► pty_resize         EOF ─► "pty://exit" ─�
   today (shown as pending). Only streaks of 2+ days are displayed.
 - Today's activity summary reuses the ActivityWatch loader (top 5 apps).
 
+## Agenda
+
+- Table `events` (migration 0004): `kind` event/memo, `day` (local date, for
+  range queries), `start_at`/`end_at` (ISO, same day) or `all_day`,
+  `remind_minutes`/`reminded_at`, optional `note_id` (meeting notes).
+- `src/lib/agenda/agenda.ts` (pure, tested): `/rdv` and `/memo` parsing, week
+  and month grids (Monday first), overlap layout of a day (`layoutDay`),
+  reminder times and due reminders (max 60 min late).
+- Reminders: `checkReminders()` every 30 s from App (the webview keeps running
+  while the overlay is hidden) → `tauri-plugin-notification`.
+- The week view also shows tasks with a due date, notes modified that day and
+  habit entries; nothing is duplicated in `events`.
+- No recurrence and no multi-day events in this version.
+
 ## Weekly review
 
 ```

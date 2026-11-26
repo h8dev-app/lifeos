@@ -10,6 +10,10 @@
   import Settings from "./views/Settings.svelte";
   import Activity from "./views/Activity.svelte";
   import Claude from "./views/Claude.svelte";
+  import Agenda from "./views/Agenda.svelte";
+  import { checkReminders, REMINDER_INTERVAL_MS } from "./lib/agenda/reminders";
+  import { atMinutes, defaultReminder, formatMinutes, parseEventArgs, type EventKind } from "./lib/agenda/agenda";
+  import { createEvent } from "./lib/db/events";
   import { GITHUB_POLL_MS } from "./lib/activity/sync";
   import { autoReviewIfDue, generateReview, weekFromArgs, type ReviewResult } from "./lib/review/generate";
   import EntryPreview from "./components/EntryPreview.svelte";
@@ -45,6 +49,8 @@
             case "note": return handleNote(r.args);
             case "claude": return handleClaude(r.args);
             case "bilan": return handleReview(r.args);
+            case "rdv": return handleEvent(r.args, "event");
+            case "memo": return handleEvent(r.args, "memo");
           }
           return false;
         case "freetext":
@@ -130,6 +136,22 @@
   }
 
   /** `/note` opens the Notes view; `/note <titre>` creates the note and opens it. */
+  /** `/rdv Dentiste @demain 14h30 *Lieu` · `/memo payer le loyer @vendredi [9h]` */
+  async function handleEvent(args: string, kind: EventKind): Promise<boolean> {
+    const p = parseEventArgs(args, kind);
+    if ("error" in p) { say(p.error, "error"); return false; }
+    await createEvent({
+      title: p.title, kind, day: p.day, allDay: p.allDay,
+      startAt: p.start !== null ? atMinutes(p.day, p.start) : null,
+      endAt: p.end !== null ? atMinutes(p.day, p.end) : null,
+      location: p.location, description: null, remindMinutes: defaultReminder(kind), noteId: null,
+    });
+    app.agendaVersion++;
+    const when = `${formatDay(p.day)}${p.start !== null ? ` à ${formatMinutes(p.start)}` : ""}`;
+    say(`✓ ${kind === "memo" ? "📌 Pense-bête" : "📅 Rendez-vous"} « ${p.title} » ${when}.`, "ok");
+    return true;
+  }
+
   let reviewBusy = false;
 
   function openReview(r: ReviewResult, prefix: string) {
@@ -200,7 +222,7 @@
   // Once the Claude panel has been shown, keep it mounted (session survives).
   $effect(() => { if (app.view === "claude") app.claude.opened = true; });
 
-  const VIEWS: View[] = ["dashboard", "tasks", "notes", "activity", "claude", "settings"];
+  const VIEWS: View[] = ["dashboard", "tasks", "agenda", "notes", "activity", "claude", "settings"];
 
   function onKeydown(e: KeyboardEvent) {
     // Inside the terminal, Escape belongs to Claude (it interrupts it).
@@ -212,7 +234,7 @@
       // First Escape cancels an AI proposal, the next one closes the overlay.
       if (app.pending) cancelPending();
       else if (e.shiftKey || !consumeEscape()) closeOverlay();
-    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6"].includes(e.key)) {
+    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6", "7"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];
     }
@@ -224,6 +246,10 @@
     const settingsReady = reloadSettings().catch((e) => say(`Réglages illisibles : ${e}`, "error"));
     settingsReady.then(runGithubSync);
     const githubTimer = setInterval(runGithubSync, GITHUB_POLL_MS);
+    // Agenda notifications, checked every 30 s while LifeOS runs (even hidden).
+    const remindTick = () => checkReminders().catch((e) => console.error("reminders", e));
+    remindTick();
+    const reminderTimer = setInterval(remindTick, REMINDER_INTERVAL_MS);
     const dataReady = Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
@@ -240,6 +266,7 @@
     return () => {
       unlisten.then((f) => f());
       clearInterval(githubTimer);
+      clearInterval(reminderTimer);
     };
   });
 </script>
@@ -251,6 +278,7 @@
   <div class="content">
     {#if app.view === "dashboard"}<Dashboard />
     {:else if app.view === "tasks"}<Tasks />
+    {:else if app.view === "agenda"}<Agenda />
     {:else if app.view === "notes"}<Notes />
     {:else if app.view === "activity"}<Activity />
     {:else if app.view === "settings"}<Settings />{/if}
@@ -268,7 +296,7 @@
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">Échap pour fermer · Ctrl+1…6 pour changer de vue</p>
+    <p class="hint">Échap pour fermer · Ctrl+1…7 pour changer de vue</p>
   </footer>
 </main>
 

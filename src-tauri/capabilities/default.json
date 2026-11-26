@@ -37,6 +37,7 @@
     "fs:allow-write-text-file",
     "fs:allow-rename",
     "fs:allow-stat",
-    "store:default"
+    "store:default",
+    "notification:default"
   ]
 }

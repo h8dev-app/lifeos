@@ -1,6 +1,6 @@
 [package]
 name = "lifeos"
-version = "0.3.2"
+version = "0.4.0"
 description = "LifeOS - local-first life tracker overlay"
 authors = ["Henri"]
 edition = "2024"
@@ -24,6 +24,7 @@ keyring = "4.2.0"
 tauri-plugin-store = "2.5.1"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 portable-pty = "0.9.0"
+tauri-plugin-notification = "2.8.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"

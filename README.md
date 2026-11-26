@@ -5,6 +5,15 @@ Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccour
 
 État : **v1 complète** (jalons 1 à 7) : overlay, raccourci, `--toggle`, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub, panneau Claude Code, tableau de bord avec séries.
 
+## Agenda
+
+Vue **semaine** (heures, glisser un rendez-vous pour le déplacer, clic sur un créneau vide pour en créer un) et vue **mois** (clic sur un jour = sa semaine).
+- **Rendez-vous** (📅) et **pense-bêtes** (📌), avec lieu, détails et **rappel** par notification système (aucun, à l'heure, 5 min, 15 min, 1 h, la veille ; pense-bête sans heure → 9 h).
+- Chaque jour montre aussi : les **tâches** à échéance (cochables), les **notes** modifiées ce jour-là, tes **saisies** d'habitudes.
+- Un rendez-vous peut avoir une **note de compte rendu** (catégorie « Agenda » dans Notes).
+- L'accueil affiche l'agenda du jour et celui de demain.
+- Les rappels ne marchent que si LifeOS tourne (en fond, c'est le cas après le démarrage de la session). Un rappel manqué de plus d'une heure n'est pas affiché.
+
 ## Bilan hebdomadaire
 
 Chaque lundi (au premier affichage de LifeOS), le bilan de la semaine passée est créé dans Notes : `bilan-2026-s48.md`.
@@ -28,6 +37,8 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
 | `/tache rendre le dossier #Cours !haute @vendredi` | tâche (catégorie, priorité `!haute`/`!moyenne`/`!basse` et échéance optionnelles) |
 | `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
+| `/rdv Dentiste @demain 14h30 *Cabinet_Dupont` | rendez-vous (heure ou plage `9h-10h30`, lieu `*…` optionnel) |
+| `/memo payer le loyer @vendredi` | pense-bête sur la journée (ou à une heure : `/memo appeler maman 18h`) |
 | `/bilan` · `/bilan -1` | bilan de la semaine en cours / dernière, enregistré dans Notes |
 | `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
 
@@ -36,7 +47,7 @@ Survole une entrée récente pour la supprimer (×).
 
 Échéances : `@auj`, `@demain`, `@après-demain`, `@lundi`…`@dimanche` (le prochain, aujourd'hui inclus), `@28/11`, `@28/11/2026`, `@2026-11-28`.
 
-Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Notes, `Ctrl+4` Activité, `Ctrl+5` Claude, `Ctrl+6` Réglages.
+Vues : `Ctrl+1` Accueil, `Ctrl+2` Tâches, `Ctrl+3` Agenda, `Ctrl+4` Notes, `Ctrl+5` Activité, `Ctrl+6` Claude, `Ctrl+7` Réglages.
 
 - **Activité** : temps actif par application (clic = détail par titre de fenêtre) et fil de la journée qui mélange saisies, pushs GitHub et activité. `←` / `→` pour changer de jour.
 
@@ -105,7 +116,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.3.2-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.4.0-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).

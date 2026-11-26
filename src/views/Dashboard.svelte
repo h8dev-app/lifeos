@@ -5,6 +5,7 @@
   import TaskList from "../components/TaskList.svelte";
   import Streaks from "../components/Streaks.svelte";
   import ActivitySummary from "../components/ActivitySummary.svelte";
+  import AgendaToday from "../components/AgendaToday.svelte";
   import { app, guard, reloadEntries, say } from "../lib/app.svelte";
   import { deleteEntry } from "../lib/db/entries";
   import { startOfDayIso, today } from "../lib/dates";
@@ -37,6 +38,7 @@
 <Streaks />
 
 <div class="grid">
+  <AgendaToday />
   <section>
     <h2>Tâches du jour</h2>
     {#if todayTasks.length}
@@ -53,7 +55,7 @@
   header { text-align: center; margin-bottom: 20px; }
   .time { font-size: 72px; font-weight: 200; letter-spacing: 2px; }
   .date { color: var(--text-muted); font-size: 18px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 1200px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; max-width: 1200px; margin: 0 auto; }
   h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
   .empty { color: var(--text-muted); }
   code { font-family: var(--mono); color: var(--text); }
