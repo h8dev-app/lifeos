@@ -19,7 +19,8 @@
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
   import { addTask } from "./lib/db/tasks";
-  import { createNote } from "./lib/db/notes";
+  import { createFolder, createNote } from "./lib/db/notes";
+  import { parseNoteArgs } from "./lib/notes/markdown";
   import { parseCatArgs, parseInput } from "./lib/parsing/slash";
   import { parseTaskArgs } from "./lib/parsing/task";
   import { formatEntryData } from "./lib/format";
@@ -159,10 +160,16 @@
     }
   }
 
+  /** `/note` opens Notes; `/note Titre #Catégorie` creates the note and opens it. */
   async function handleNote(args: string): Promise<boolean> {
-    if (args.trim()) {
-      const note = await createNote(args.trim());
+    const { title, folder } = parseNoteArgs(args);
+    if (title) {
+      if (folder) await createFolder(folder);
+      const note = await createNote(title, folder);
       app.openNoteId = note.id;
+    } else if (folder) {
+      say("Donne un nom à la note : /note Titre #Catégorie", "error");
+      return false;
     }
     app.view = "notes";
     say("");

@@ -105,7 +105,13 @@ the AI with a preview and confirmation (milestone 4).
   `notes_fts` (FTS5) are only an index.
 - `syncNotes()` runs when the Notes view opens: new files are indexed,
   changed files (hash) re-indexed, missing files marked deleted.
+- Categories are sub-folders of `notes/` (one level). Moving a note renames
+  the file into the folder and updates `notes.path` (same id). Folder names keep
+  accents/case but lose characters forbidden on Windows (`sanitizeFolderName`).
+- Weekly reviews are written to `notes/Bilans/`; old ones at the root are moved
+  there by `syncNotes`.
 - The file name is fixed at creation; the title comes from the first `# heading`.
+- The card excerpt comes from the FTS body (first 600 chars, Markdown stripped).
 - Delete = move to `notes/.trash/` + soft delete. Nothing is erased.
 - File access is limited to `$APPDATA/notes/**` (capabilities/default.json),
   no `remove` permission.

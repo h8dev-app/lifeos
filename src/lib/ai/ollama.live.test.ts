@@ -64,7 +64,7 @@ describe.runIf(process.env.LIVE_OLLAMA === "1")("ollama live review", () => {
   it("writes a review with the expected sections", async () => {
     const { REVIEW_SYSTEM_PROMPT, reviewUserPrompt, summarizeCategories, isoWeek } = await import("../review/week");
     const sport = cats[0];
-    const entries = [
+    const entries: { categoryId: string; occurredAt: string; data: Record<string, string | number> }[] = [
       { categoryId: "1", occurredAt: new Date(2026, 10, 23, 8).toISOString(), data: { activity: "course", distance_km: 5, duration_min: 28 } },
       { categoryId: "1", occurredAt: new Date(2026, 10, 25, 8).toISOString(), data: { activity: "course", distance_km: 6, duration_min: 33 } },
       { categoryId: "4", occurredAt: new Date(2026, 10, 24, 20).toISOString(), data: { service: "ubereats", amount_eur: 18.5 } },

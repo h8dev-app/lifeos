@@ -27,7 +27,7 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 | `/devoirs maths 45min exercices p.12` | matière, durée, note |
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
 | `/tache rendre le dossier @vendredi` | tâche du jour, échéance optionnelle |
-| `/note Réunion BTS` | crée la note et l'ouvre (`/note` seul ouvre la vue Notes) |
+| `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
 | `/bilan` · `/bilan -1` | bilan de la semaine en cours / dernière, enregistré dans Notes |
 | `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
 
@@ -56,7 +56,11 @@ L'IA propose une entrée (catégorie, valeurs, heure) : `Entrée` pour l'enregis
 Si l'IA est indisponible, seules les commandes `/…` marchent.
 
 - **Tâches** : cocher, reporter à demain, supprimer. Une tâche non faite reste dans « Aujourd'hui » les jours suivants.
-- **Notes** : fichiers `.md` dans le dossier `notes/` (modifiables avec n'importe quel éditeur). Sauvegarde automatique, aperçu avec `Ctrl+E`, recherche plein texte. Une note supprimée part dans `notes/.trash/`.
+- **Notes** : fichiers `.md` dans le dossier `notes/` (modifiables avec n'importe quel éditeur), rangés par **catégorie** = sous-dossier (`notes/Cours/…`). Les bilans vont dans `Bilans`.
+  - « ＋ Nouvelle note » demande un nom et une catégorie (existante ou nouvelle).
+  - Cartes avec aperçu du texte, filtre par catégorie, recherche plein texte.
+  - Dans une note : changer de catégorie, Écrire/Aperçu (`Ctrl+E`), corbeille, fermer (✕ ou `Échap`). Sauvegarde automatique.
+  - Une note supprimée part dans `notes/.trash/`.
 
 ## Prérequis
 
@@ -96,7 +100,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.2.0-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.2.1-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).
