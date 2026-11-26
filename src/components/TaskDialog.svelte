@@ -140,7 +140,6 @@
     padding: 9px 11px; color: var(--text); font: inherit; outline: none; color-scheme: dark;
   }
   .name { font-size: 16px; }
-  select option { background: #1b2030; }
   input:focus, select:focus { border-color: var(--accent); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .seg button { flex: 1; border: none; border-radius: 0; background: transparent; color: var(--text-muted); padding: 7px; }

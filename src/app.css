@@ -25,3 +25,15 @@ html, body, #app {
   font-family: var(--font);
   overflow: hidden;
 }
+
+/*
+ * Drop-down lists: the open list is drawn by the system (GTK on Linux), which
+ * keeps a light background but takes the text color from the page. Without
+ * this rule the options are white on white. Dark text on a light list works
+ * on Linux and Windows alike.
+ */
+option,
+optgroup {
+  background: #ffffff;
+  color: #14161c;
+}

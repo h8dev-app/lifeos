@@ -289,7 +289,6 @@
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
   }
-  .selbar select option { background: #1b2030; }
   .selbar .danger { color: var(--error); border-color: var(--error); }
   .selbar .ghost { background: none; border-color: transparent; color: var(--text-muted); }
 </style>

@@ -86,7 +86,6 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 9px 11px; color: var(--text); font: inherit; outline: none;
   }
-  select option { background: #1b2030; }
   input:focus, select:focus { border-color: var(--accent); }
   .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
   button {

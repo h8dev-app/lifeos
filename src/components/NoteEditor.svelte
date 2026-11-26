@@ -159,7 +159,6 @@
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
   }
-  select option { background: #1b2030; }
   button:hover, select:hover { border-color: var(--accent); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .seg button { border: none; border-radius: 0; background: transparent; color: var(--text-muted); }
