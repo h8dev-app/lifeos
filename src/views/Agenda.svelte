@@ -203,7 +203,7 @@
 </script>
 
 <section class="agenda">
-  <div class="toolbar">
+  <div class="toolbar glass">
     <div class="nav">
       <button onclick={() => shift(-1)} aria-label="Précédent">←</button>
       <button onclick={() => (anchor = t)}>Aujourd'hui</button>
@@ -323,7 +323,7 @@
 
 <style>
   .agenda { display: flex; flex-direction: column; gap: 12px; height: 100%; min-height: 0; max-width: 1400px; width: 100%; margin: 0 auto; }
-  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border-radius: var(--radius); }
   .toolbar h2 { margin: 0; font-size: 18px; font-weight: 600; min-width: 200px; }
   .nav { display: flex; gap: 4px; }
   button {
@@ -331,7 +331,7 @@
     border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 14px;
   }
   button:hover { border-color: var(--accent); }
-  .primary { background: var(--accent); color: #0c0e14; border: none; font-weight: 600; }
+  .primary { background: var(--accent); color: var(--on-accent); border: none; font-weight: 600; }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .seg button { border: none; border-radius: 0; background: transparent; color: var(--text-muted); }
   .seg button.on { background: var(--surface-strong); color: var(--text); }
@@ -344,14 +344,14 @@
   .dayhead.today .daylabel { color: var(--accent); font-weight: 700; }
   .daylabel { display: block; width: 100%; background: none; border: none; border-radius: 0; padding: 6px; text-align: center; color: var(--text-muted); font-size: 13px; }
   .allday { display: flex; flex-direction: column; gap: 3px; padding: 4px; min-height: 30px; max-height: 120px; overflow: auto; }
-  .allday.drop { background: rgba(122, 162, 255, 0.12); }
+  .allday.drop { background: var(--accent-soft); }
   .chip {
     display: flex; align-items: center; gap: 4px; text-align: left; width: 100%;
     font-size: 12px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border);
     background: var(--surface-strong); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .chip span { overflow: hidden; text-overflow: ellipsis; }
-  .chip.memo { border-color: #fbbf24; }
+  .chip.memo { border-color: var(--warn); }
   .chip.event { border-color: var(--accent); }
   .chip.task input { margin: 0; accent-color: var(--accent); }
   .chip.task.done span { text-decoration: line-through; color: var(--text-muted); }
@@ -365,14 +365,14 @@
     position: relative; border-left: 1px solid var(--border); cursor: cell;
     background-image: repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px, transparent 48px);
   }
-  .col.today { background-color: rgba(122, 162, 255, 0.05); }
-  .col.drop { background-color: rgba(122, 162, 255, 0.12); }
+  .col.today { background-color: var(--accent-faint); }
+  .col.drop { background-color: var(--accent-soft); }
   .event {
     position: absolute; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
     padding: 3px 6px; border-radius: 6px; overflow: hidden; text-align: left; cursor: grab;
-    background: rgba(122, 162, 255, 0.28); border: 1px solid var(--accent); font-size: 12px;
+    background: var(--accent-soft); border: 1px solid var(--accent); font-size: 12px;
   }
-  .event.memo { background: rgba(251, 191, 36, 0.22); border-color: #fbbf24; }
+  .event.memo { background: color-mix(in srgb, var(--warn) 22%, transparent); border-color: var(--warn); }
   .event .time { color: var(--text-muted); font-size: 11px; }
   .etitle { font-weight: 600; line-height: 1.2; }
   .loc { color: var(--text-muted); font-size: 11px; }

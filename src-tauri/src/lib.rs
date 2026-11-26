@@ -54,6 +54,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
             overlay::overlay_hide,
+            overlay::overlay_set_transparent,
             wallpaper::wallpaper_image,
             db::db_url,
             secrets::secret_set,

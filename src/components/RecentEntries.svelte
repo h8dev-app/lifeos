@@ -36,7 +36,7 @@
 
 <style>
   section { min-width: 0; }
-  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  h2 { font-size: 13px; font-weight: 600; color: var(--text-muted); }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   li {
     display: grid;

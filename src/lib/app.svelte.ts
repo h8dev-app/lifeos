@@ -9,7 +9,8 @@ import { today } from "./dates";
 import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
-import { applyAppearance, DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
+import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
+import { applyAppearance } from "./theme";
 
 export type View = "dashboard" | "tasks" | "agenda" | "notes" | "activity" | "claude" | "settings";
 

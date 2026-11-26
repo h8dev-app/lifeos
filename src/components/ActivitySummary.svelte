@@ -50,7 +50,7 @@
 
 <style>
   section { min-width: 0; }
-  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  h2 { font-size: 13px; font-weight: 600; color: var(--text-muted); }
   .title { background: none; border: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
   .title:hover { color: var(--text); }
   .accent { color: var(--accent); margin-left: 6px; }

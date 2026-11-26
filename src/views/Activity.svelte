@@ -126,7 +126,7 @@
   .notice p { margin: 4px 0; }
   .link { background: none; border: none; color: var(--accent); padding: 0; cursor: pointer; font: inherit; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 32px; margin-top: 20px; }
-  h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  h3 { font-size: 13px; font-weight: 600; color: var(--text-muted); }
   .accent { color: var(--accent); margin-left: 6px; }
   .muted { color: var(--text-muted); }
   .small { font-size: 12px; }

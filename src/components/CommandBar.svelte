@@ -197,7 +197,7 @@
 <style>
   .wrap { position: relative; width: min(760px, 100%); }
   .bar {
-    display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 999px;
+    display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-radius: var(--radius);
   }
   .bar:focus-within { border-color: var(--accent); }
   .prompt { color: var(--accent); font-size: 20px; }
@@ -220,7 +220,7 @@
   .syntax code { font: 14px var(--mono); color: var(--accent); }
   .params ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
   .params li { display: grid; grid-template-columns: 120px 1fr; gap: 10px; font-size: 13px; color: var(--text-muted); padding: 1px 4px; border-radius: 4px; }
-  .params li.hot { background: rgba(122, 162, 255, 0.15); color: var(--text); }
+  .params li.hot { background: var(--accent-soft); color: var(--text); }
   .params li code { font: 13px var(--mono); color: var(--text); }
   .ex { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); }
   .ex code { font-family: var(--mono); color: var(--text); }
@@ -228,7 +228,7 @@
   .list li {
     display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
   }
-  .list li.active { background: rgba(122, 162, 255, 0.18); }
+  .list li.active { background: var(--accent-soft); }
   .icon { width: 20px; text-align: center; }
   .name { font: 14px var(--mono); color: var(--text); min-width: 110px; }
   .sum { color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

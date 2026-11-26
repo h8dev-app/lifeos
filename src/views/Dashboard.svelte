@@ -196,13 +196,16 @@
 <style>
   .dash { display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 0; max-width: 1400px; width: 100%; margin: 0 auto; }
   .tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 30px; }
-  .lbl { color: var(--text-muted); font-size: 13px; margin-right: 6px; }
+  .lbl {
+    color: var(--text-muted); font-size: 13px; margin-right: 6px; padding: 4px 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); text-shadow: none;
+  }
   .grow { flex: 1; }
   .tools button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 4px 12px; cursor: pointer; font: inherit; font-size: 13px;
   }
-  .tools .ghost { background: none; border-color: transparent; color: var(--text-muted); }
+  .tools .ghost { background: var(--surface); color: var(--text-muted); }
   .tools .ghost:hover { color: var(--text); }
   .tools .edit { opacity: 0.6; }
   .tools .edit:hover { opacity: 1; }
@@ -215,20 +218,20 @@
 
   .w {
     position: absolute; min-width: 0; min-height: 0; display: flex; flex-direction: column;
-    border-radius: 22px; container-type: size;
+    border-radius: var(--radius); container-type: size;
   }
   .body { position: relative; flex: 1; min-height: 0; overflow: auto; padding: 4px 18px 14px; }
   .editing .area {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-image: radial-gradient(var(--surface-strong) 1px, transparent 1px);
     background-size: 24px 24px; border-radius: var(--radius);
   }
-  .editing .w { cursor: grab; outline: 1px dashed rgba(122, 162, 255, 0.7); outline-offset: -1px; user-select: none; touch-action: none; }
+  .editing .w { cursor: grab; outline: 1px dashed var(--accent); outline-offset: -1px; user-select: none; touch-action: none; }
   .editing .w:focus-visible { outline: 2px solid var(--accent); }
   .editing .body { pointer-events: none; opacity: 0.55; }
-  .w.dragging { cursor: grabbing; box-shadow: var(--glass-rim), 0 24px 60px rgba(0, 0, 0, 0.5); }
+  .w.dragging { cursor: grabbing; box-shadow: var(--shadow); }
   .bar { position: absolute; top: 6px; right: 10px; z-index: 1; }
   .x {
-    background: rgba(12, 14, 22, 0.6); border: 1px solid var(--glass-border); border-radius: 50%;
+    background: var(--popup); border: 1px solid var(--border); border-radius: 50%;
     width: 24px; height: 24px; color: var(--text); cursor: pointer; font-size: 11px; padding: 0;
   }
   .x:hover { color: var(--error); }
@@ -245,7 +248,7 @@
   .date { color: var(--text-muted); font-size: clamp(12px, 10cqh, 18px); }
   .w-clock .body { padding: 8px; }
 
-  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 12px 0; }
+  h2 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 12px 0; }
   .title { background: none; border: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
   .title:hover { color: var(--text); }
   .empty { color: var(--text-muted); }

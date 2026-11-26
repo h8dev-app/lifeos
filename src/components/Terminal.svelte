@@ -4,6 +4,12 @@
   import { FitAddon } from "@xterm/addon-fit";
   import "@xterm/xterm/css/xterm.css";
   import { onPtyData, onPtyExit, ptyKill, ptyResize, ptySpawn, ptyWrite } from "../lib/pty";
+  import { currentPalette, onThemeChange, type Palette } from "../lib/theme";
+
+  // The terminal stays dark in every theme: claude's own colors are made for it.
+  const termTheme = (p: Palette) => ({
+    background: "rgba(0,0,0,0)", foreground: "#e6e6e9", cursor: p.accent, selectionBackground: `${p.accent}55`,
+  });
 
   // One `claude` session in a terminal. The session lives as long as this
   // component: hiding the overlay or changing view does not stop it.
@@ -23,8 +29,9 @@
       fontFamily: '"JetBrains Mono", "Cascadia Code", ui-monospace, monospace',
       fontSize: 14,
       allowTransparency: true,
-      theme: { background: "rgba(0,0,0,0)", foreground: "#eef0f5", cursor: "#7aa2ff", selectionBackground: "#7aa2ff55" },
+      theme: termTheme(currentPalette()),
     });
+    const unTheme = onThemeChange((p) => (term.options.theme = termTheme(p)));
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(host);
@@ -76,6 +83,7 @@
 
     return () => {
       disposed = true;
+      unTheme();
       observer.disconnect();
       input.dispose();
       unData.then((f) => f());
@@ -90,7 +98,11 @@
 <div class="term" bind:this={host}></div>
 
 <style>
-  .term { flex: 1; min-height: 0; padding: 8px; background: rgba(6, 8, 14, 0.62); border: 1px solid var(--glass-border); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim); border-radius: var(--radius); }
+  .term {
+    flex: 1; min-height: 0; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border);
+    background: color-mix(in srgb, #111214 var(--panel-opacity), transparent);
+    -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+  }
   .term :global(.xterm) { height: 100%; }
   .term :global(.xterm-viewport) { background: transparent !important; }
   .error { color: var(--error); margin: 0 0 8px; }

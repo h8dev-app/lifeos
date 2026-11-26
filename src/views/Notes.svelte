@@ -223,7 +223,7 @@
   .notes { display: grid; grid-template-columns: 240px 1fr; gap: 24px; height: 100%; max-width: 1280px; width: 100%; margin: 0 auto; min-height: 0; }
   aside { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; padding: 14px; border-radius: var(--radius); }
   .new {
-    background: var(--accent); color: #0c0e14; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
     padding: 9px 12px; font: inherit; font-weight: 600; cursor: pointer;
   }
   .new:hover { filter: brightness(1.1); }
@@ -255,7 +255,7 @@
   .card:hover { border-color: var(--accent); background: var(--surface-strong); }
   .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .card { user-select: none; }
-  .card.selected { border-color: var(--accent); background: rgba(122, 162, 255, 0.15); }
+  .card.selected { border-color: var(--accent); background: var(--accent-soft); }
   .head { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .check { margin: 0; accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
   .card:hover .check, .check.visible, .card.selected .check { opacity: 1; }

@@ -149,7 +149,7 @@
 </script>
 
 <section class="board">
-  <div class="filters">
+  <div class="filters glass">
     <button class="chip" class:active={filter === ALL} onclick={() => (filter = ALL)}>Toutes</button>
     {#each app.taskCategories as c (c.id)}
       <span class="chip-wrap">
@@ -238,7 +238,7 @@
 
 <style>
   .board { display: flex; flex-direction: column; gap: 14px; height: 100%; min-height: 0; max-width: 1280px; width: 100%; margin: 0 auto; }
-  .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border-radius: var(--radius); }
   .chip-wrap { display: inline-flex; align-items: center; }
   .chip {
     display: inline-flex; align-items: center; gap: 6px;
@@ -262,7 +262,7 @@
   }
   .grow { flex: 1; }
   .new {
-    background: var(--accent); color: #0c0e14; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--on-accent); border: none; border-radius: 8px;
     padding: 7px 14px; font: inherit; font-weight: 600; cursor: pointer;
   }
   .columns { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 14px; flex: 1; min-height: 0; }
@@ -271,9 +271,9 @@
     border-radius: var(--radius); padding: 10px;
     transition: border-color 0.1s, background 0.1s;
   }
-  .column.drop { border-color: var(--accent); background: rgba(122, 162, 255, 0.08); }
+  .column.drop { border-color: var(--accent); background: var(--accent-faint); }
   .column header { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 10px; }
-  .column h2 { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  .column h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--text-muted); }
   .col-actions { display: flex; gap: 2px; }
   .mini { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 2px 6px; border-radius: 6px; }
   .mini:hover { color: var(--text); background: var(--surface-strong); }

@@ -40,7 +40,7 @@
 
 <style>
   section { min-width: 0; }
-  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+  h2 { font-size: 13px; font-weight: 600; color: var(--text-muted); }
   .title { background: none; border: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
   .title:hover { color: var(--text); }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -48,7 +48,7 @@
     display: grid; grid-template-columns: 64px 1fr; gap: 2px 10px; align-items: center;
     padding: 8px 12px; background: var(--surface); border-radius: 8px; border-left: 3px solid var(--accent);
   }
-  li.memo { border-left-color: #fbbf24; }
+  li.memo { border-left-color: var(--warn); }
   .when { color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
   .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .loc { grid-column: 2; color: var(--text-muted); font-size: 12px; }

@@ -1,32 +1,51 @@
-/* Design tokens. Change colors here, never inline in components. */
+/*
+ * Design tokens. Base colors come from the theme (src/lib/theme.ts, set on
+ * <html> at start-up); the values below are the Graphite theme, used until
+ * the settings are loaded. Never hard-code a color in a component: use these.
+ */
 :root {
-  /* Background: desktop wallpaper (wallpaper.ts) under a dark veil (Réglages). */
-  --wallpaper: none;
-  --overlay-tint: 0.35;
-  --surface: rgba(255, 255, 255, 0.07);
-  --surface-strong: rgba(255, 255, 255, 0.12);
-  --border: rgba(255, 255, 255, 0.16);
+  /* Theme palette (overwritten by applyAppearance). */
+  --veil: #0e0f11;
+  --panel: #18191c;
+  --popup: #1f2024;
+  --text: #ececef;
+  --text-muted: #9a9ca3;
+  --border: rgba(255, 255, 255, 0.09);
+  --accent: #7c9cff;
+  --on-accent: #0e0f11;
+  --ok: #5cc98a;
+  --error: #ef6b6b;
+  --warn: #e5b450;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --backdrop: rgba(0, 0, 0, 0.45);
+  --loose-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 
-  /* Liquid glass: translucent, blurred panels with a light rim. */
-  /* Light sheen over a dark tint: text stays readable on bright wallpapers. */
-  --glass-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.06)),
-    rgba(12, 14, 22, var(--glass-tint));
-  --glass-bg-strong: linear-gradient(145deg, rgba(44, 48, 64, 0.78), rgba(22, 25, 36, 0.72));
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06),
-    inset 1px 0 0 rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  --glass-filter: blur(var(--glass-blur)) saturate(160%);
-  /* Set from Réglages (applyAppearance). */
-  --glass-tint: 0.15;
-  --glass-blur: 12px;
-  --text: #eef0f5;
-  --text-muted: #b3b9c9;
-  --accent: #7aa2ff;
-  --ok: #4ade80;
-  --error: #f87171;
-  --radius: 18px;
-  --font: system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
+  /* Appearance settings (Réglages → Apparence). */
+  --wallpaper: none;
+  --overlay-tint: 30%;
+  --panel-opacity: 94%;
+  --glass-blur: 0px;
+
+  /* Derived colors. */
+  /* Item backgrounds: tinted panel color, readable even outside a panel. */
+  --surface: color-mix(in srgb, var(--text) 6%, var(--panel-bg));
+  --surface-strong: color-mix(in srgb, var(--text) 11%, var(--panel-bg));
+  --hover: color-mix(in srgb, var(--text) 8%, var(--panel-bg));
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --accent-faint: color-mix(in srgb, var(--accent) 7%, transparent);
+  --panel-bg: color-mix(in srgb, var(--panel) var(--panel-opacity), transparent);
+
+  /* Former glass names, still used by components. */
+  --glass-bg: var(--panel-bg);
+  --glass-bg-strong: var(--popup);
+  --glass-border: var(--border);
+  --glass-rim: 0 0 0 0 transparent;
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --glass-filter: blur(var(--glass-blur));
+
+  --radius: 14px;
+  --radius-sm: 8px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
 }
 
@@ -39,44 +58,51 @@ html, body, #app {
   background: transparent;
   color: var(--text);
   font-family: var(--font);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
 
-/*
- * Drop-down lists: the open list is drawn by the system (GTK on Linux), which
- * keeps a light background but takes the text color from the page. Without
- * this rule the options are white on white. Dark text on a light list works
- * on Linux and Windows alike.
- */
+::selection { background: var(--accent-soft); }
+
+/* Thin, discreet scrollbars. */
+* { scrollbar-width: thin; scrollbar-color: var(--surface-strong) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--surface-strong); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Native drop-down lists (rare: most use Select.svelte). */
 option,
 optgroup {
-  background: #ffffff;
-  color: #14161c;
+  background: var(--popup);
+  color: var(--text);
 }
 
 /*
- * Liquid glass panel. `.glass` for large panels (blurs what is behind),
- * `.glass-strong` for dialogs and pop-ups (darker, text must stay readable).
- * Small items inside use the plain --surface colors: nesting blurs is costly.
+ * Panels. `.glass` for large panels (opacity and blur from Réglages),
+ * `.glass-strong` for dialogs and pop-ups (always opaque, readable).
  */
 .glass,
 .glass-strong {
   position: relative;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-rim), var(--glass-shadow);
+  border: 1px solid var(--border);
+  text-shadow: none;
+}
+.glass {
+  background: var(--panel-bg);
+  box-shadow: var(--glass-shadow);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
-.glass { background: var(--glass-bg); }
-.glass-strong { background: var(--glass-bg-strong); }
-/* Specular highlight in the top-left corner. */
-.glass::before,
-.glass-strong::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: -1; /* behind the content: backdrop-filter makes the panel a stacking context */
-  background: radial-gradient(120% 60% at 10% 0%, rgba(255, 255, 255, 0.14), transparent 55%);
+.glass-strong {
+  background: var(--popup);
+  box-shadow: var(--shadow);
+}
+
+/* Section titles inside panels: small, muted, sentence case. */
+.section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
 }

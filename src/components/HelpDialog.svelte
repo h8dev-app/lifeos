@@ -94,13 +94,13 @@
 
 <style>
   .backdrop {
-    position: fixed; inset: 0; z-index: 15; background: rgba(0, 0, 0, 0.5);
+    position: fixed; inset: 0; z-index: 15; background: var(--backdrop);
     display: flex; align-items: center; justify-content: center;
   }
   .dialog {
     width: min(760px, calc(100% - 32px)); height: min(80vh, 760px); display: flex; flex-direction: column;
     background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: var(--glass-rim), 0 20px 60px rgba(0, 0, 0, 0.5); outline: none;
+    box-shadow: var(--shadow); outline: none;
   }
   header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
   h2 { margin: 0; font-size: 18px; flex: 1; }
@@ -112,7 +112,7 @@
   .close { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
   .close:hover { color: var(--text); }
   .body { overflow: auto; padding: 8px 20px 20px; }
-  h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 18px 0 8px; }
+  h3 { font-size: 12px; color: var(--text-muted); margin: 18px 0 8px; }
   article { padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; background: var(--surface); }
   article.focus { outline: 1px solid var(--accent); }
   .line { display: flex; align-items: center; gap: 8px; }

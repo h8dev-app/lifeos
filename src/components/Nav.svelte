@@ -27,5 +27,5 @@
     color: var(--text-muted); padding: 5px 14px; cursor: pointer; font: inherit; font-size: 14px;
   }
   button:hover { color: var(--text); }
-  .active { color: var(--text); background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.22); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  .active { color: var(--text); background: var(--surface-strong); }
 </style>

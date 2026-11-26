@@ -123,12 +123,12 @@
 
 <style>
   .backdrop {
-    position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, 0.45);
+    position: fixed; inset: 0; z-index: 10; background: var(--backdrop);
     display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh;
   }
   .dialog {
     width: min(480px, calc(100% - 32px)); background: var(--glass-bg-strong); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); box-shadow: var(--glass-rim), var(--glass-shadow); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; box-shadow: var(--glass-rim), 0 20px 60px rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
   }
   form { display: flex; flex-direction: column; gap: 8px; }
   h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }

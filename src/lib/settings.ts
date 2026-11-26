@@ -15,11 +15,17 @@ export interface Settings {
   githubUser: string;
   /** Generate last week's review automatically from Monday. */
   weeklyReviewAuto: boolean;
-  /** Dark veil over the wallpaper, 0 (clear) to 0.95 (almost opaque). */
+  /** Veil over the background (wallpaper or windows), 0 (clear) to 0.95. */
   overlayOpacity: number;
-  /** Dark tint inside glass panels, 0 (clear glass) to 0.8. */
-  glassTint: number;
-  /** Blur behind glass panels, in pixels (0 = clear glass). */
+  /** Color theme (theme.ts), "auto" follows the system. */
+  theme: string;
+  /** Accent color (theme.ts), "theme" = the theme's own. */
+  accent: string;
+  /** What is behind the panels: the wallpaper, or the real windows (transparent). */
+  backgroundMode: "wallpaper" | "transparent";
+  /** Panel opacity, 0 (see-through) to 1 (opaque). */
+  panelOpacity: number;
+  /** Blur behind panels, in pixels (visible in wallpaper mode only). */
   glassBlur: number;
 }
 
@@ -30,9 +36,12 @@ export const DEFAULT_SETTINGS: Settings = {
   openaiModel: "gpt-5-mini",
   githubUser: "",
   weeklyReviewAuto: true,
-  overlayOpacity: 0.35,
-  glassTint: 0.15,
-  glassBlur: 12,
+  overlayOpacity: 0.3,
+  theme: "graphite",
+  accent: "theme",
+  backgroundMode: "transparent",
+  panelOpacity: 0.94,
+  glassBlur: 0,
 };
 
 let store: Promise<Store> | null = null;
@@ -68,14 +77,4 @@ export async function loadDashboardLayout(): Promise<unknown> {
 
 export async function saveDashboardLayout(layout: unknown): Promise<void> {
   await (await getStore()).set("dashboardFree", layout);
-}
-
-const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
-
-/** Apply the appearance settings (CSS variables); partial = live preview. */
-export function applyAppearance(s: Partial<Pick<Settings, "overlayOpacity" | "glassTint" | "glassBlur">>): void {
-  const root = document.documentElement.style;
-  if (s.overlayOpacity !== undefined) root.setProperty("--overlay-tint", String(clamp(s.overlayOpacity, 0, 0.95)));
-  if (s.glassTint !== undefined) root.setProperty("--glass-tint", String(clamp(s.glassTint, 0, 0.8)));
-  if (s.glassBlur !== undefined) root.setProperty("--glass-blur", `${clamp(s.glassBlur, 0, 40)}px`);
 }

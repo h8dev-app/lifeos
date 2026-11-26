@@ -316,7 +316,6 @@
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">/ commandes · /help aide · Échap fermer · Ctrl+1…7 vues</p>
   </footer>
 </main>
 
@@ -327,22 +326,21 @@
     flex-direction: column;
     position: relative;
     /* Keeps loose text (hints, toolbars) readable on bright wallpapers. */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    text-shadow: var(--loose-shadow);
     padding: 20px 24px 16px;
   }
   /* Fixed page: views fit the window and scroll inside their own panels. */
   /* Wallpaper (or a gradient) under a dark veil, set from Réglages. */
   .bg {
     position: fixed; inset: 0;
-    background: var(--wallpaper) center / cover no-repeat,
-      radial-gradient(circle at 20% 20%, #2b3a67, transparent 50%),
-      radial-gradient(circle at 80% 70%, #5b2a5e, transparent 50%), #0c0e14;
+    background: var(--wallpaper) center / cover no-repeat, var(--veil);
   }
-  .bg::after { content: ""; position: absolute; inset: 0; background: rgba(6, 8, 14, var(--overlay-tint)); }
+  /* Transparent mode: no wallpaper, the windows behind LifeOS show through the veil. */
+  :global(:root[data-bg="transparent"]) .bg { background: none; }
+  .bg::after { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--veil) var(--overlay-tint), transparent); }
   .content { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
   .content > :global(*) { flex: 1; min-height: 0; }
   .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .panel.hidden { display: none; }
   footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; flex-shrink: 0; }
-  .hint { margin: 0; color: var(--text-muted); font-size: 12px; }
 </style>

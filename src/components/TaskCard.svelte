@@ -57,7 +57,7 @@
   }
   .card:hover { border-color: var(--accent); }
   .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .card.selected { background: rgba(122, 162, 255, 0.18); border-color: var(--accent); }
+  .card.selected { background: var(--accent-soft); border-color: var(--accent); }
   .top { display: flex; align-items: flex-start; gap: 8px; }
   .check { margin: 3px 0 0; accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
   .card:hover .check, .check.visible, .card.selected .check { opacity: 1; }

@@ -3,7 +3,8 @@
   import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
-  import { applyAppearance, saveSetting, type ProviderId, type Settings } from "../lib/settings";
+  import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
+  import { ACCENT_CHOICES, ACCENTS, applyAppearance, paletteOf, resolveTheme, THEME_CHOICES, THEMES } from "../lib/theme";
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
   import type { ProviderStatus } from "../lib/ai/provider";
@@ -57,6 +58,9 @@
     autostart = (await guard(autostartEnabled)) ?? false;
   });
 
+  // Palette of the chosen theme, for the accent swatches (reactive on settings).
+  const pal = $derived(paletteOf(resolveTheme(app.settings.theme, matchMedia("(prefers-color-scheme: dark)").matches), app.settings.accent));
+
   async function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     await guard(() => saveSetting(key, value));
     await reloadSettings();
@@ -83,22 +87,75 @@
 
 <section class="glass">
   <h2>Apparence</h2>
-  <div class="grid">
-    <label for="opacity">Voile sombre</label>
+  <p class="label">Thème</p>
+  <div class="themes" role="radiogroup" aria-label="Thème">
+    {#each THEME_CHOICES as id (id)}
+      {@const p = id === "auto" ? null : paletteOf(id, app.settings.accent)}
+      <button role="radio" aria-checked={app.settings.theme === id} class="theme" class:on={app.settings.theme === id}
+        onclick={() => set("theme", id)}>
+        {#if p}
+          <span class="swatch" style:background={p.veil}>
+            <span class="mini" style:background={p.panel} style:border-color={p.border}>
+              <span class="line" style:background={p.text}></span>
+              <span class="line short" style:background={p.muted}></span>
+              <span class="dot" style:background={p.accent}></span>
+            </span>
+          </span>
+        {:else}
+          {@const d = paletteOf("graphite", app.settings.accent)}
+          {@const l = paletteOf("clair", app.settings.accent)}
+          <span class="swatch split">
+            <span style:background={d.veil}><span class="mini" style:background={d.panel} style:border-color={d.border}>
+              <span class="line" style:background={d.text}></span><span class="dot" style:background={d.accent}></span></span></span>
+            <span style:background={l.veil}><span class="mini" style:background={l.panel} style:border-color={l.border}>
+              <span class="line" style:background={l.text}></span><span class="dot" style:background={l.accent}></span></span></span>
+          </span>
+        {/if}
+        <span class="tname">{id === "auto" ? "Auto (système)" : THEMES[id].label}</span>
+      </button>
+    {/each}
+  </div>
+
+  <p class="label">Couleur d'accent</p>
+  <div class="accents" role="radiogroup" aria-label="Couleur d'accent">
+    {#each ACCENT_CHOICES as id (id)}
+      {@const color = id === "theme" ? paletteOf(resolveTheme(app.settings.theme, pal.dark), "theme").accent : (pal.dark ? ACCENTS[id].dark : ACCENTS[id].light)}
+      <button role="radio" aria-checked={app.settings.accent === id} class="accent" class:on={app.settings.accent === id}
+        title={id === "theme" ? "Celle du thème" : ACCENTS[id].label} onclick={() => set("accent", id)}>
+        <span style:background={color}>{id === "theme" ? "A" : ""}</span>
+      </button>
+    {/each}
+  </div>
+
+  <p class="label">Derrière LifeOS</p>
+  <div class="providers bgmode">
+    {#each [
+      { id: "transparent", label: "Transparent", hint: "Tes fenêtres ouvertes restent visibles, comme sous un calque" },
+      { id: "wallpaper", label: "Fond d'écran", hint: "Ton fond d'écran, plein écran (le flou des panneaux n'agit que dans ce mode)" },
+    ] as const as m (m.id)}
+      <label class:active={app.settings.backgroundMode === m.id}>
+        <input type="radio" name="bgmode" checked={app.settings.backgroundMode === m.id}
+          onchange={() => set("backgroundMode", m.id)} />
+        <span><strong>{m.label}</strong><small>{m.hint}</small></span>
+      </label>
+    {/each}
+  </div>
+  <div class="grid sliders">
+    <label for="opacity">Voile</label>
     <div class="range">
       <input id="opacity" type="range" min="0" max="0.95" step="0.05" value={app.settings.overlayOpacity}
         oninput={(e) => applyAppearance({ overlayOpacity: Number(e.currentTarget.value) })}
         onchange={(e) => set("overlayOpacity", Number(e.currentTarget.value))} />
       <span>{Math.round(app.settings.overlayOpacity * 100)} %</span>
     </div>
-    <label for="tint">Teinte des panneaux</label>
+    <label for="panels">Panneaux</label>
     <div class="range">
-      <input id="tint" type="range" min="0" max="0.8" step="0.05" value={app.settings.glassTint}
-        oninput={(e) => applyAppearance({ glassTint: Number(e.currentTarget.value) })}
-        onchange={(e) => set("glassTint", Number(e.currentTarget.value))} />
-      <span>{Math.round(app.settings.glassTint * 100)} %</span>
+      <input id="panels" type="range" min="0.3" max="1" step="0.02" value={app.settings.panelOpacity}
+        oninput={(e) => applyAppearance({ panelOpacity: Number(e.currentTarget.value) })}
+        onchange={(e) => set("panelOpacity", Number(e.currentTarget.value))} />
+      <span>{Math.round(app.settings.panelOpacity * 100)} %</span>
     </div>
-    <label for="blur">Flou des panneaux</label>
+    <label for="blur">Flou</label>
     <div class="range">
       <input id="blur" type="range" min="0" max="40" step="1" value={app.settings.glassBlur}
         oninput={(e) => applyAppearance({ glassBlur: Number(e.currentTarget.value) })}
@@ -106,7 +163,7 @@
       <span>{app.settings.glassBlur} px</span>
     </div>
   </div>
-  <p class="hint">LifeOS affiche ton fond d'écran derrière ses panneaux en verre. Voile : assombrit tout le fond d'écran. Teinte et flou : à 0, les panneaux sont du verre clair qui laisse tout voir. Un nouveau fond d'écran est repris à la prochaine ouverture.</p>
+  <p class="hint">Voile : couvre ce qui est derrière LifeOS. Panneaux : à 100 %, ils sont opaques et rien ne passe à travers.</p>
 
   <h2>Démarrage</h2>
   <label class="check">
@@ -187,15 +244,47 @@
 </section>
 
 <style>
-  section { width: min(760px, 100%); margin: 0 auto; height: 100%; overflow: auto; padding: 4px 24px 24px; border-radius: var(--radius); }
+  section { width: min(760px, 100%); margin: 0 auto; height: 100%; overflow: auto; padding: 4px 28px 28px; border-radius: var(--radius); }
+  .bgmode { margin-bottom: 12px; }
   .range { display: flex; align-items: center; gap: 12px; }
   .range input { flex: 1; accent-color: var(--accent); }
   .range span { color: var(--text-muted); font-size: 13px; min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
-  h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 28px 0 10px; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; padding: 24px 0 12px; border-top: 1px solid var(--border); }
+  section > h2:first-child { border-top: none; padding-top: 16px; }
+  .label { margin: 14px 0 8px; font-size: 13px; color: var(--text-muted); }
+
+  .themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+  .theme {
+    display: flex; flex-direction: column; gap: 6px; padding: 6px; background: none;
+    border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted);
+  }
+  .theme:hover { border-color: var(--text-muted); }
+  .theme.on { border-color: var(--accent); color: var(--text); box-shadow: 0 0 0 1px var(--accent); }
+  .swatch { display: flex; height: 58px; border-radius: 8px; overflow: hidden; padding: 8px; }
+  .swatch.split { padding: 0; }
+  .swatch.split > span { flex: 1; display: flex; padding: 8px 4px 8px 8px; }
+  .swatch.split > span + span { padding: 8px 8px 8px 4px; }
+  .mini {
+    flex: 1; position: relative; border: 1px solid; border-radius: 6px; padding: 8px;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  .line { height: 4px; width: 70%; border-radius: 2px; opacity: 0.9; }
+  .line.short { width: 45%; }
+  .dot { position: absolute; right: 7px; bottom: 7px; width: 9px; height: 9px; border-radius: 50%; }
+  .tname { font-size: 12px; }
+
+  .accents { display: flex; gap: 10px; flex-wrap: wrap; }
+  .accent { padding: 3px; border-radius: 50%; border: 1px solid transparent; background: none; }
+  .accent span {
+    display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    color: var(--on-accent); font-size: 11px; font-weight: 700;
+  }
+  .accent.on { border-color: var(--text); }
+  .sliders { margin-top: 12px; }
   .providers { display: flex; flex-direction: column; gap: 6px; }
   .providers label {
     display: flex; gap: 10px; align-items: center; padding: 10px 12px;
-    background: var(--surface); border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+    background: var(--surface); border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer;
   }
   .providers label.active { border-color: var(--accent); }
   .providers span { display: flex; flex-direction: column; }
