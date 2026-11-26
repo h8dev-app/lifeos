@@ -21,7 +21,7 @@
 </nav>
 
 <style>
-  nav { display: flex; justify-content: center; gap: 4px; margin-bottom: 24px; }
+  nav { display: flex; justify-content: center; gap: 4px; margin-bottom: 16px; flex-shrink: 0; }
   button {
     background: none; border: 1px solid transparent; border-radius: 999px;
     color: var(--text-muted); padding: 5px 14px; cursor: pointer; font: inherit; font-size: 14px;

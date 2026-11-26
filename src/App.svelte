@@ -321,12 +321,13 @@
     display: flex;
     flex-direction: column;
     background: var(--overlay-bg);
-    padding: 32px 24px 24px;
+    padding: 20px 24px 16px;
   }
-  .content { flex: 1; overflow: auto; min-height: 0; display: flex; flex-direction: column; }
-  .content > :global(*) { flex-shrink: 0; }
+  /* Fixed page: views fit the window and scroll inside their own panels. */
+  .content { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
+  .content > :global(*) { flex: 1; min-height: 0; }
   .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .panel.hidden { display: none; }
-  footer { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 16px; }
+  footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; flex-shrink: 0; }
   .hint { margin: 0; color: var(--text-muted); font-size: 12px; }
 </style>

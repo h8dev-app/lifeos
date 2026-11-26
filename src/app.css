@@ -1,6 +1,9 @@
 /* Design tokens. Change colors here, never inline in components. */
 :root {
-  --overlay-bg: rgba(12, 14, 20, 0.82);
+  /* Overlay background: opacity set from Réglages (applyOverlayOpacity). */
+  --overlay-bg: rgba(12, 14, 20, 0.6);
+  /* Home screen blocks: darker than the background, stays readable over the desktop. */
+  --card-bg: rgba(16, 19, 27, 0.72);
   --surface: rgba(255, 255, 255, 0.06);
   --surface-strong: rgba(255, 255, 255, 0.1);
   --border: rgba(255, 255, 255, 0.14);

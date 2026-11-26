@@ -22,7 +22,7 @@
 {/if}
 
 <style>
-  .streaks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 28px; }
+  .streaks { display: flex; flex-wrap: wrap; gap: 8px; }
   .streak {
     display: flex; align-items: center; gap: 6px; padding: 6px 14px;
     background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 14px;

@@ -3,7 +3,7 @@
   import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
-  import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
+  import { applyOverlayOpacity, saveSetting, type ProviderId, type Settings } from "../lib/settings";
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
   import type { ProviderStatus } from "../lib/ai/provider";
@@ -82,6 +82,18 @@
 </script>
 
 <section>
+  <h2>Apparence</h2>
+  <div class="grid">
+    <label for="opacity">Opacité du fond</label>
+    <div class="range">
+      <input id="opacity" type="range" min="0.2" max="1" step="0.05" value={app.settings.overlayOpacity}
+        oninput={(e) => applyOverlayOpacity(Number(e.currentTarget.value))}
+        onchange={(e) => set("overlayOpacity", Number(e.currentTarget.value))} />
+      <span>{Math.round(app.settings.overlayOpacity * 100)} %</span>
+    </div>
+  </div>
+  <p class="hint">Plus bas, on voit mieux le bureau derrière LifeOS. Les blocs de l'accueil gardent un fond plus sombre pour rester lisibles.</p>
+
   <h2>Démarrage</h2>
   <label class="check">
     <input type="checkbox" checked={!!autostart} disabled={autostart === null || isDev}
@@ -161,7 +173,10 @@
 </section>
 
 <style>
-  section { width: min(760px, 100%); margin: 0 auto; }
+  section { width: min(760px, 100%); margin: 0 auto; height: 100%; overflow: auto; padding: 0 8px 16px; }
+  .range { display: flex; align-items: center; gap: 12px; }
+  .range input { flex: 1; accent-color: var(--accent); }
+  .range span { color: var(--text-muted); font-size: 13px; min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
   h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 28px 0 10px; }
   .providers { display: flex; flex-direction: column; gap: 6px; }
   .providers label {
@@ -177,7 +192,7 @@
   .ok { color: var(--ok); }
   .err { color: var(--error); }
   .grid { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; }
-  input:not([type="radio"]):not([type="checkbox"]) {
+  input:not([type="radio"]):not([type="checkbox"]):not([type="range"]) {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 7px 10px; color: var(--text); font: 14px var(--mono); outline: none; min-width: 0;
   }

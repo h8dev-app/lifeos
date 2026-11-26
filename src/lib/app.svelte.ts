@@ -9,7 +9,7 @@ import { today } from "./dates";
 import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
-import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
+import { applyOverlayOpacity, DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
 
 export type View = "dashboard" | "tasks" | "agenda" | "notes" | "activity" | "claude" | "settings";
 
@@ -74,6 +74,7 @@ export async function guard<T>(action: () => Promise<T>): Promise<T | undefined>
 
 export async function reloadSettings() {
   app.settings = await loadSettings();
+  applyOverlayOpacity(app.settings.overlayOpacity);
 }
 
 /** One GitHub sync, result stored in `app.github`. Silent when no username. */

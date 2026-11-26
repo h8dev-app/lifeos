@@ -114,7 +114,7 @@
 </section>
 
 <style>
-  section { max-width: 1200px; margin: 0 auto; }
+  section { max-width: 1200px; width: 100%; margin: 0 auto; height: 100%; overflow: auto; padding: 0 8px 16px; }
   .daynav { display: flex; align-items: center; justify-content: center; gap: 16px; }
   .daynav h2 { margin: 0; font-weight: 400; font-size: 20px; min-width: 180px; text-align: center; }
   .daynav button {
