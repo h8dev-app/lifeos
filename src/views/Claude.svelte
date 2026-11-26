@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
   import { onMount } from "svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Terminal from "../components/Terminal.svelte";
@@ -34,7 +35,7 @@
   {#if installed === false}
     <div class="notice">
       <p><code>claude</code> n'est pas installé (ou introuvable dans le PATH).</p>
-      <button class="link" onclick={() => openUrl(CLAUDE_INSTALL_URL)}>Installer Claude Code ↗</button>
+      <button class="link" onclick={() => openUrl(CLAUDE_INSTALL_URL)}>Installer Claude Code <Icon name="external-link" size={13} /></button>
     </div>
   {:else}
     <div class="bar">

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import {
     applyToken, findCommand, inputContext, matchCommands, tokenSuggestions,
     type CommandDef, type Suggestion,
@@ -137,8 +138,8 @@
   {#if open || showParams}
     <div class="popup" role="presentation">
       {#if showParams && current}
-        <div class="params glass-strong">
-          <div class="syntax"><span class="icon">{current.icon ?? ""}</span><code>{current.syntax}</code></div>
+        <div class="params glass-strong anim-drop">
+          <div class="syntax"><span class="icon" style:color={current.color}>{#if current.icon}<Icon name={current.icon} />{/if}</span><code>{current.syntax}</code></div>
           <ul>
             {#each current.params as p (p.token)}
               <li class:hot={ctx.kind === "params" && !!p.prefix && ctx.token.startsWith(p.prefix)}>
@@ -150,13 +151,13 @@
         </div>
       {/if}
       {#if open}
-        <ul class="list glass-strong" role="listbox" aria-label="Suggestions">
+        <ul class="list glass-strong anim-drop" role="listbox" aria-label="Suggestions">
           {#if ctx.kind === "command"}
             {#each commandList as c, i (c.name)}
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <li role="option" aria-selected={i === active} class:active={i === active}
                 onmousedown={(e) => e.preventDefault()} onclick={() => completeCommand(c)} onmouseenter={() => (active = i)}>
-                <span class="icon">{c.icon ?? ""}</span>
+                <span class="icon" style:color={c.color}>{#if c.icon}<Icon name={c.icon} />{/if}</span>
                 <code class="name">/{c.name}</code>
                 <span class="sum">{c.summary}</span>
               </li>
@@ -190,7 +191,7 @@
       aria-autocomplete="list"
       aria-expanded={open}
     />
-    <button type="button" class="help" onclick={onhelp} title="Aide des commandes (/help)" aria-label="Aide">?</button>
+    <button type="button" class="help" onclick={onhelp} title="Aide des commandes (/help)" aria-label="Aide"><Icon name="circle-question-mark" size={17} /></button>
   </form>
 </div>
 
@@ -204,8 +205,8 @@
   input { flex: 1; background: none; border: none; outline: none; color: var(--text); font: 17px var(--mono); }
   input::placeholder { color: var(--text-muted); }
   .help {
-    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: none;
-    color: var(--text-muted); cursor: pointer; font: inherit; font-size: 13px;
+    display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: none; background: none;
+    color: var(--text-muted); cursor: pointer; padding: 0;
   }
   .help:hover { color: var(--text); border-color: var(--accent); }
 
@@ -229,7 +230,7 @@
     display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 14px;
   }
   .list li.active { background: var(--accent-soft); }
-  .icon { width: 20px; text-align: center; }
+  .icon { width: 20px; display: inline-flex; justify-content: center; color: var(--text-muted); }
   .name { font: 14px var(--mono); color: var(--text); min-width: 110px; }
   .sum { color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .list li.keys { cursor: default; color: var(--text-muted); font-size: 11px; justify-content: flex-end; padding: 4px 10px 2px; }

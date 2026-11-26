@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { onMount } from "svelte";
   import Select from "./Select.svelte";
   import {
@@ -76,11 +77,11 @@
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div class="backdrop" onclick={oncancel} {onkeydown}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ev-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+  <div class="dialog glass-strong" role="dialog" aria-modal="true" aria-labelledby="ev-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
     <form onsubmit={submit}>
       <div class="seg" role="radiogroup" aria-label="Type">
-        <button type="button" role="radio" aria-checked={kind === "event"} class:on={kind === "event"} onclick={() => (kind = "event")}>📅 Rendez-vous</button>
-        <button type="button" role="radio" aria-checked={kind === "memo"} class:on={kind === "memo"} onclick={() => (kind = "memo")}>📌 Pense-bête</button>
+        <button type="button" role="radio" aria-checked={kind === "event"} class:on={kind === "event"} onclick={() => (kind = "event")}><Icon name="calendar" size={14} /> Rendez-vous</button>
+        <button type="button" role="radio" aria-checked={kind === "memo"} class:on={kind === "memo"} onclick={() => (kind = "memo")}><Icon name="pin" size={14} /> Pense-bête</button>
       </div>
       <h2 id="ev-title" class="sr">{event ? "Modifier" : "Nouveau"}</h2>
 
@@ -114,7 +115,7 @@
 
       {#if event && onnote}
         <button type="button" class="link" onclick={onnote}>
-          📝 {event.noteId ? "Ouvrir la note liée" : "Créer une note de compte rendu"}
+          <Icon name="file-text" size={14} /> {event.noteId ? "Ouvrir la note liée" : "Créer une note de compte rendu"}
         </button>
       {/if}
 
@@ -123,7 +124,7 @@
           {#if confirmDelete}
             <button type="button" class="danger" onclick={ondelete}>Confirmer la suppression</button>
           {:else}
-            <button type="button" class="ghost" onclick={() => (confirmDelete = true)}>🗑 Supprimer</button>
+            <button type="button" class="ghost" onclick={() => (confirmDelete = true)}><Icon name="trash-2" size={14} /> Supprimer</button>
           {/if}
         {/if}
         <span class="grow"></span>

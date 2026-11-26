@@ -147,11 +147,12 @@ export interface NewCategory {
 }
 
 export const CAT_USAGE =
-  "Usage : /cat <nom> [icône] [champ:type …] — types : texte, distance, durée, euros, nombre. " +
-  "Ex. /cat lecture 📖 livre:texte pages:nombre durée:durée";
+  "Usage : /cat <nom> [icone:nom] [champ:type …] — types : texte, distance, durée, euros, nombre. " +
+  "Ex. /cat lecture icone:book-open livre:texte pages:nombre durée:durée";
 
 /**
- * `/cat lecture 📖 livre:texte pages:nombre durée:durée`
+ * `/cat lecture icone:book-open livre:texte pages:nombre durée:durée`
+ * - `icone:<nom>` (or `icon:`): Lucide icon name; an emoji is still accepted.
  * - `nombre` fields use their name as unit: `/lecture 30pages`.
  * - Text fields take one word each, the last one takes the rest.
  */
@@ -178,6 +179,10 @@ export function parseCatArgs(args: string): NewCategory | { error: string } {
       return { error: `« ${token} » : écris champ:type. ${CAT_USAGE}` };
     }
     const label = token.slice(0, sep);
+    if (/^ic[oô]ne?$/i.test(label) && !icon && token.slice(sep + 1)) {
+      icon = token.slice(sep + 1).toLowerCase();
+      continue;
+    }
     const typeName = slugify(token.slice(sep + 1));
     const type = CAT_TYPES[typeName];
     const key = slugify(label).replace(/-/g, "_");

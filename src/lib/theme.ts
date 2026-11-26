@@ -95,7 +95,16 @@ export function themeTokens(p: Palette): Record<string, string> {
   };
 }
 
+export type UiStyle = "sobre" | "glass";
+
+/** Values a style puts in place when chosen (the sliders can change them after). */
+export const STYLE_PRESETS: Record<UiStyle, { panelOpacity: number; glassBlur: number }> = {
+  sobre: { panelOpacity: 0.94, glassBlur: 0 },
+  glass: { panelOpacity: 0.6, glassBlur: 22 },
+};
+
 export interface Appearance {
+  style: string;
   theme: string;
   accent: string;
   backgroundMode: "wallpaper" | "transparent";
@@ -108,6 +117,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), h
 const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
 
 let current: Partial<Appearance> = {};
+let themeAnimTimer: ReturnType<typeof setTimeout> | undefined;
 let systemListener = false;
 const listeners = new Set<(p: Palette) => void>();
 
@@ -126,7 +136,14 @@ export function currentPalette(): Palette {
 export function applyAppearance(s: Partial<Appearance>): void {
   current = { ...current, ...s };
   const root = document.documentElement;
+  if (s.style !== undefined) root.dataset.style = s.style === "glass" ? "glass" : "sobre";
   if (s.theme !== undefined || s.accent !== undefined) {
+    // Cross-fade colors when the theme changes after start-up.
+    if (root.dataset.theme) {
+      root.classList.add("theme-anim");
+      clearTimeout(themeAnimTimer);
+      themeAnimTimer = setTimeout(() => root.classList.remove("theme-anim"), 400);
+    }
     const p = currentPalette();
     for (const [k, v] of Object.entries(themeTokens(p))) root.style.setProperty(k, v);
     root.style.colorScheme = p.dark ? "dark" : "light";

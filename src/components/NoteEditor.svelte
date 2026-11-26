@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { marked } from "marked";
   import DOMPurify from "dompurify";
   import { onDestroy, onMount } from "svelte";
@@ -118,7 +119,7 @@
     <div class="tools">
       <Select label="Catégorie" value={note.folder} onchange={move} options={[
         { value: "", label: "Sans catégorie" },
-        ...folders.map((f) => ({ value: f, label: `📁 ${f}` })),
+        ...folders.map((f) => ({ value: f, label: f })),
       ]} />
       <div class="seg" role="group" aria-label="Mode">
         <button class:on={!preview} onclick={() => preview && togglePreview()}>Écrire</button>
@@ -128,9 +129,9 @@
         <button class="danger" onclick={ondelete}>Confirmer</button>
         <button onclick={() => (confirmDelete = false)}>Annuler</button>
       {:else}
-        <button class="icon" onclick={() => (confirmDelete = true)} title="Mettre à la corbeille" aria-label="Supprimer">🗑</button>
+        <button class="icon" onclick={() => (confirmDelete = true)} title="Mettre à la corbeille" aria-label="Supprimer"><Icon name="trash-2" /></button>
       {/if}
-      <button class="icon close" onclick={close} title="Fermer (Échap)" aria-label="Fermer la note">✕</button>
+      <button class="icon close" onclick={close} title="Fermer (Échap)" aria-label="Fermer la note"><Icon name="x" /></button>
     </div>
   </header>
 

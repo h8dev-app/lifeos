@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
+  import CategoryIcon from "./CategoryIcon.svelte";
   import type { RecentEntry } from "../lib/db/entries";
   import type { Category } from "../lib/types";
   import { formatEntryData } from "../lib/format";
@@ -22,8 +24,7 @@
       {#each entries as e (e.id)}
         {@const cat = byId.get(e.categoryId)}
         <li>
-          <span class="dot" style:background={cat?.color ?? "var(--text-muted)"}></span>
-          <span class="icon">{cat?.icon ?? "•"}</span>
+          <CategoryIcon icon={cat?.icon} color={cat?.color} />
           <span class="name">{cat?.name ?? "?"}</span>
           <span class="data">{cat ? formatEntryData(cat, e.data) : ""}</span>
           <span class="when">{formatWhen(e.occurredAt)}</span>
@@ -40,14 +41,13 @@
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   li {
     display: grid;
-    grid-template-columns: 8px 24px 110px 1fr auto 24px;
+    grid-template-columns: 18px 110px 1fr auto 24px;
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
     background: var(--surface);
     border-radius: 8px;
   }
-  .dot { width: 8px; height: 8px; border-radius: 50%; }
   .name { font-weight: 600; }
   .data { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .when { color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; }

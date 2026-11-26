@@ -4,6 +4,7 @@
  */
 import type { Category, FieldDef } from "../types";
 import { slugify } from "../parsing/slash";
+import { categoryIcon, type IconName } from "../ui/iconNames";
 
 export interface ParamDef {
   /** How it is written: `@date`, `#catégorie`, `<titre>`… */
@@ -23,14 +24,16 @@ export interface CommandDef {
   examples: string[];
   /** Can be run without arguments (Enter on the bare command submits). */
   bare?: boolean;
-  icon?: string;
+  icon?: IconName | null;
+  /** Icon color (habit categories). */
+  color?: string | null;
 }
 
 const DATE: ParamDef = { token: "@date", prefix: "@", desc: "@auj, @demain, @après-demain, @lundi…@dimanche, @28/11, @28/11/2026" };
 
 export const BUILTIN_COMMANDS: CommandDef[] = [
   {
-    name: "tache", aliases: ["tâche", "todo"], group: "Organiser", icon: "✅",
+    name: "tache", aliases: ["tâche", "todo"], group: "Organiser", icon: "square-check",
     summary: "Ajouter une tâche au kanban",
     syntax: "/tache <titre> [#catégorie] [!priorité] [@échéance]",
     params: [
@@ -42,7 +45,7 @@ export const BUILTIN_COMMANDS: CommandDef[] = [
     examples: ["/tache rendre le dossier #Cours !haute @vendredi", "/tache faire les courses"],
   },
   {
-    name: "rdv", group: "Organiser", icon: "📅",
+    name: "rdv", group: "Organiser", icon: "calendar",
     summary: "Ajouter un rendez-vous à l'agenda",
     syntax: "/rdv <titre> [@date] <heure | 9h-10h30> [*lieu]",
     params: [
@@ -54,46 +57,46 @@ export const BUILTIN_COMMANDS: CommandDef[] = [
     examples: ["/rdv Dentiste @demain 14h30 *Cabinet_Dupont", "/rdv Réunion projet @lundi 9h-10h30"],
   },
   {
-    name: "memo", aliases: ["mémo", "pensebete"], group: "Organiser", icon: "📌",
+    name: "memo", aliases: ["mémo", "pensebete"], group: "Organiser", icon: "pin",
     summary: "Ajouter un pense-bête (rappel à 9 h ou à l'heure donnée)",
     syntax: "/memo <texte> [@date] [heure]",
     params: [{ token: "<texte>", desc: "ce qu'il ne faut pas oublier" }, DATE, { token: "[heure]", desc: "18h, 9h30… (sinon toute la journée)" }],
     examples: ["/memo payer le loyer @vendredi", "/memo appeler maman 18h"],
   },
   {
-    name: "note", group: "Organiser", icon: "📝", bare: true,
+    name: "note", group: "Organiser", icon: "notebook-pen", bare: true,
     summary: "Créer une note (ou ouvrir les notes sans argument)",
     syntax: "/note [titre] [#catégorie]",
     params: [{ token: "[titre]", desc: "titre de la note" }, { token: "#catégorie", prefix: "#", desc: "catégorie de notes (dossier)" }],
     examples: ["/note Révisions réseau #Cours", "/note"],
   },
   {
-    name: "cat", group: "Saisir", icon: "🗂", bare: false,
+    name: "cat", group: "Saisir", icon: "folder-plus", bare: false,
     summary: "Créer une catégorie d'habitude",
-    syntax: "/cat <nom> [icône] [champ:type …]",
+    syntax: "/cat <nom> [icone:nom] [champ:type …]",
     params: [
       { token: "<nom>", desc: "nom de la catégorie (devient la commande /nom)" },
-      { token: "[icône]", desc: "un emoji" },
+      { token: "[icone:nom]", desc: "icône Lucide (lucide.dev), ex. icone:book-open, icone:music, icone:dumbbell" },
       { token: "champ:type", desc: "types : texte, distance, durée, euros, nombre" },
     ],
-    examples: ["/cat lecture 📖 livre:texte pages:nombre durée:durée"],
+    examples: ["/cat lecture icone:book-open livre:texte pages:nombre durée:durée"],
   },
   {
-    name: "bilan", group: "Outils", icon: "📊", bare: true,
+    name: "bilan", group: "Outils", icon: "chart-column", bare: true,
     summary: "Bilan IA de la semaine (enregistré dans Notes)",
     syntax: "/bilan [-1]",
     params: [{ token: "[-1]", desc: "-1 = semaine dernière (sinon semaine en cours)" }],
     examples: ["/bilan", "/bilan -1"],
   },
   {
-    name: "claude", group: "Outils", icon: "🤖", bare: true,
+    name: "claude", group: "Outils", icon: "square-terminal", bare: true,
     summary: "Ouvrir Claude Code dans un terminal",
     syntax: "/claude [dossier]",
     params: [{ token: "[dossier]", desc: "dossier de travail (~/projets par défaut)" }],
     examples: ["/claude ~/projets/lifeos"],
   },
   {
-    name: "help", aliases: ["aide"], group: "Outils", icon: "❓", bare: true,
+    name: "help", aliases: ["aide"], group: "Outils", icon: "circle-question-mark", bare: true,
     summary: "Afficher l'aide des commandes",
     syntax: "/help [commande]",
     params: [{ token: "[commande]", desc: "détail d'une commande, ex. /help tache" }],
@@ -123,7 +126,8 @@ export function categoryCommand(c: Category): CommandDef {
   return {
     name: c.slug,
     group: "Saisir",
-    icon: c.icon ?? "•",
+    icon: categoryIcon(c.icon),
+    color: c.color,
     summary: `Saisie ${c.name.toLowerCase()} (habitude)`,
     syntax: `/${c.slug} ${params.map((p) => p.token).join(" ")}`,
     params,
@@ -194,9 +198,9 @@ const DATE_WORDS: Suggestion[] = [
 ];
 
 const PRIORITY_WORDS: Suggestion[] = [
-  { insert: "!haute", label: "!haute", hint: "🔴" },
-  { insert: "!moyenne", label: "!moyenne", hint: "🟠" },
-  { insert: "!basse", label: "!basse", hint: "⚪" },
+  { insert: "!haute", label: "!haute", hint: "priorité haute" },
+  { insert: "!moyenne", label: "!moyenne", hint: "priorité moyenne" },
+  { insert: "!basse", label: "!basse", hint: "priorité basse" },
 ];
 
 /** Suggestions for the word being typed (`@`, `#`, `!`). */

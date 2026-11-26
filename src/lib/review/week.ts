@@ -114,7 +114,7 @@ export function renderStatsMarkdown(s: WeekStats): string {
   lines.push("### Habitudes", "");
   if (s.categories.length === 0) lines.push("Aucune entrée cette semaine.", "");
   for (const c of s.categories) {
-    const head = `- **${c.category.icon ?? ""} ${c.category.name}** : ${plural(c.count, "entrée")} sur ${plural(c.days, "jour")}`;
+    const head = `- **${c.category.name}** : ${plural(c.count, "entrée")} sur ${plural(c.days, "jour")}`;
     lines.push(c.totals.length ? `${head} · ${c.totals.join(" · ")}` : head);
   }
   if (s.streaks.length) {

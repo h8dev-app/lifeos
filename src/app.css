@@ -45,6 +45,12 @@
 
   --radius: 14px;
   --radius-sm: 8px;
+
+  /* Motion. */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
   --font: "Inter", system-ui, -apple-system, "Segoe UI", "Cantarell", sans-serif;
   --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", monospace;
 }
@@ -105,4 +111,124 @@ optgroup {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+/* Icons (Lucide) sit on the text baseline. */
+svg.icon { flex-shrink: 0; vertical-align: -0.15em; }
+
+/* ---------------------------------------------------------------- motion */
+
+button {
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease),
+    opacity var(--dur-fast) var(--ease), transform 120ms var(--ease);
+}
+button:active:not(:disabled) { transform: scale(0.97); }
+input, textarea { transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease); }
+
+@keyframes lifeos-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lifeos-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lifeos-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lifeos-drop {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/*
+ * Fill "backwards" only: once finished, the animation leaves no transform
+ * behind (a transform would trap position: fixed dialogs inside the view).
+ */
+.anim-rise { animation: lifeos-rise 360ms var(--ease) backwards; }
+.anim-fade { animation: lifeos-fade var(--dur) var(--ease) backwards; }
+.anim-drop { animation: lifeos-drop 180ms var(--ease) backwards; }
+/* Every modal: dimmed backdrop fades in, the dialog pops. */
+.backdrop { animation: lifeos-fade 180ms var(--ease) backwards; }
+[aria-modal="true"] { animation: lifeos-pop 280ms var(--ease-spring) backwards; }
+
+/* Theme change: colors cross-fade for a moment (class set by theme.ts). */
+:root.theme-anim *, :root.theme-anim *::before, :root.theme-anim *::after {
+  transition: background-color 350ms ease, color 350ms ease, border-color 350ms ease, fill 350ms ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ---------------------------------------------------------- liquid glass */
+/*
+ * Style "Liquid glass" (Réglages): translucent panels, light rim brighter at
+ * the top-left, a sheen, and a soft highlight that follows the pointer
+ * (--mx/--my, set by ui/glass.ts). Blur acts on what the page draws (the
+ * wallpaper, other panels); the windows behind LifeOS stay sharp.
+ */
+:root[data-style="glass"] {
+  --radius: 20px;
+  --pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 10px rgba(0, 0, 0, 0.18);
+  --g-sheen: 0.09;
+  --g-rim: 0.55;
+  --g-spec: 0.1;
+  --g-depth: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+:root[data-style="glass"][data-theme="light"] {
+  --g-sheen: 0.55;
+  --g-rim: 0.95;
+  --g-spec: 0.5;
+  --g-depth: 0 18px 50px rgba(30, 30, 50, 0.14);
+  --pill-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 2px 10px rgba(30, 30, 50, 0.1);
+}
+:root[data-style="glass"] .glass,
+:root[data-style="glass"] .glass-strong {
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, calc(var(--g-rim) * 0.6)),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04), var(--g-depth);
+}
+:root[data-style="glass"][data-theme="dark"] .glass { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+:root[data-style="glass"] .glass {
+  background: linear-gradient(160deg, rgba(255, 255, 255, var(--g-sheen)), rgba(255, 255, 255, 0) 42%), var(--panel-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+:root[data-style="glass"] .glass-strong {
+  background: linear-gradient(160deg, rgba(255, 255, 255, var(--g-sheen)), rgba(255, 255, 255, 0) 42%),
+    color-mix(in srgb, var(--popup) 82%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+}
+/* Rim: 1px gradient border, bright at the top-left, fading, then a faint return. */
+:root[data-style="glass"] .glass::before,
+:root[data-style="glass"] .glass-strong::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, var(--g-rim)), rgba(255, 255, 255, 0.12) 28%,
+    rgba(255, 255, 255, 0.03) 55%, rgba(255, 255, 255, calc(var(--g-rim) * 0.45)));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+/* Highlight under the pointer (behind the content). */
+:root[data-style="glass"] .glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(380px circle at var(--mx, 25%) var(--my, -30%), rgba(255, 255, 255, var(--g-spec)), transparent 65%);
 }

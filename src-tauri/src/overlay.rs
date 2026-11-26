@@ -19,6 +19,9 @@ pub const MAIN_WINDOW: &str = "main";
 /// so it can put the focus in the command bar.
 pub const SHOWN_EVENT: &str = "overlay://shown";
 
+/// Event sent when the overlay hides (the frontend resets its entry animation).
+pub const HIDDEN_EVENT: &str = "overlay://hidden";
+
 fn main_window(app: &AppHandle) -> Option<WebviewWindow> {
     app.get_webview_window(MAIN_WINDOW)
 }
@@ -48,6 +51,7 @@ fn apply_mode(window: &WebviewWindow) {
 /// Hide the overlay. The app keeps running in the tray.
 pub fn hide(app: &AppHandle) {
     if let Some(window) = main_window(app) {
+        let _ = app.emit(HIDDEN_EVENT, ());
         let _ = window.hide();
     }
 }

@@ -25,7 +25,7 @@ export async function checkReminders(): Promise<void> {
   for (const e of due) {
     const when = e.allDay || !e.startAt ? (e.day === t ? "aujourd'hui" : e.day) : formatMinutes(minutesOf(e.startAt));
     sendNotification({
-      title: `${e.kind === "memo" ? "📌" : "📅"} ${e.title}`,
+      title: `${e.kind === "memo" ? "Pense-bête" : "Rendez-vous"} : ${e.title}`,
       body: [when, e.location].filter(Boolean).join(" · "),
     });
     await markReminded(e.id);

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { app } from "../lib/app.svelte";
   import type { Task } from "../lib/db/tasks";
   import { addDays, formatDay, today } from "../lib/dates";
@@ -37,19 +38,20 @@
     <input type="checkbox" class="check" class:visible={selecting} checked={selected}
       onclick={(e) => { e.stopPropagation(); onselect(); }} aria-label="Sélectionner" />
     <button class="prio" title="Priorité {prio.label.toLowerCase()} (clic pour changer)"
-      onclick={(e) => { e.stopPropagation(); oncycle(); }}>{prio.dot}</button>
+      onclick={(e) => { e.stopPropagation(); oncycle(); }}><span class="pdot" style:background={prio.color}></span></button>
     <span class="title">{task.title}</span>
   </div>
   {#if category || task.dueDate || later}
     <div class="meta">
       {#if category}<span class="tag" style:color={category.color}>#{category.name}</span>{/if}
-      {#if task.dueDate}<span class:late>⏰ {formatDay(task.dueDate)}</span>{/if}
-      {#if later}<span title="Reportée">📅 {task.plannedFor === addDays(today(), 1) ? "demain" : formatDay(task.plannedFor!)}</span>{/if}
+      {#if task.dueDate}<span class:late><Icon name="alarm-clock" size={12} /> {formatDay(task.dueDate)}</span>{/if}
+      {#if later}<span title="Reportée"><Icon name="calendar-clock" size={12} /> {task.plannedFor === addDays(today(), 1) ? "demain" : formatDay(task.plannedFor!)}</span>{/if}
     </div>
   {/if}
 </div>
 
 <style>
+  .pdot { display: block; width: 8px; height: 8px; border-radius: 50%; }
   .card {
     display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
     background: var(--surface-strong); border: 1px solid var(--border); border-left: 3px solid transparent;

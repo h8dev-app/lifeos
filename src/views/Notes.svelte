@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
+  import { flip } from "svelte/animate";
   import { onMount } from "svelte";
   import NoteEditor from "../components/NoteEditor.svelte";
   import NewNoteDialog from "../components/NewNoteDialog.svelte";
@@ -131,7 +133,7 @@
 
 <div class="notes">
   <aside class="glass">
-    <button class="new" onclick={() => (creating = true)}>＋ Nouvelle note</button>
+    <button class="new" onclick={() => (creating = true)}><Icon name="plus" size={15} /> Nouvelle note</button>
     <input class="search" placeholder="Rechercher dans les notes…" bind:value={search} aria-label="Rechercher" />
 
     <nav aria-label="Catégories">
@@ -140,7 +142,7 @@
       </button>
       {#each folders as f (f)}
         <button class="cat" class:active={filter === f} onclick={() => { filter = f; openId = null; }}>
-          <span>📁 {f}</span><span class="n">{count(f)}</span>
+          <span class="fname"><Icon name="folder" size={14} /> {f}</span><span class="n">{count(f)}</span>
         </button>
       {/each}
       {#if uncategorized || folders.length === 0}
@@ -154,7 +156,7 @@
           onkeydown={(e) => { if (e.key === "Enter") addFolder(); if (e.key === "Escape") { e.stopPropagation(); newFolderMode = false; } }}
           onblur={addFolder} />
       {:else}
-        <button class="cat add" onclick={() => (newFolderMode = true)}>＋ Catégorie</button>
+        <button class="cat add" onclick={() => (newFolderMode = true)}><Icon name="folder-plus" size={14} /> Catégorie</button>
       {/if}
     </nav>
   </aside>
@@ -169,14 +171,14 @@
       {/key}
     {:else}
       {#if selecting}
-        <div class="selbar" role="toolbar" aria-label="Actions sur la sélection">
+        <div class="selbar glass-strong anim-drop" role="toolbar" aria-label="Actions sur la sélection">
           <strong>{selected.size} sélectionnée{selected.size > 1 ? "s" : ""}</strong>
           <button onclick={() => (selected = new Set(visible.map((n) => n.id)))}>Tout sélectionner</button>
           <Select label="Déplacer vers" mode="action" placeholder="Déplacer vers…" onchange={bulkMove} options={[
             { value: "", label: "Sans catégorie" },
-            ...folders.map((f) => ({ value: f, label: `📁 ${f}` })),
+            ...folders.map((f) => ({ value: f, label: f })),
           ]} />
-          <button class="danger" onclick={bulkDelete}>{confirmBulkDelete ? "Confirmer" : "🗑 Corbeille"}</button>
+          <button class="danger" onclick={bulkDelete}>{#if confirmBulkDelete}Confirmer{:else}<Icon name="trash-2" size={14} /> Corbeille{/if}</button>
           <span class="grow"></span>
           <button class="ghost" onclick={clearSelection}>Annuler (Échap)</button>
         </div>
@@ -188,13 +190,13 @@
       {#if visible.length === 0}
         <div class="empty">
           <p>{search ? "Aucune note ne correspond." : "Aucune note ici."}</p>
-          <button class="new" onclick={() => (creating = true)}>＋ Créer une note</button>
+          <button class="new" onclick={() => (creating = true)}><Icon name="plus" size={15} /> Créer une note</button>
         </div>
       {:else}
         <div class="cards">
           {#each visible as n (n.id)}
             <!-- div, not button: it contains a checkbox (no interactive element inside a button). -->
-            <div class="card" class:selected={selected.has(n.id)} role="button" tabindex="0"
+            <div class="card" class:selected={selected.has(n.id)} role="button" tabindex="0" animate:flip={{ duration: 240 }}
               onclick={(e) => cardClick(e, n)}
               onkeydown={(e) => { if (e.key === "Enter") openId = n.id; if (e.key === " ") { e.preventDefault(); toggle(n.id); } }}>
               <span class="head">

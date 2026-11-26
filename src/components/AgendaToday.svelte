@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { app, guard } from "../lib/app.svelte";
   import { listEvents } from "../lib/db/events";
   import { formatMinutes, minutesOf, type AgendaEvent } from "../lib/agenda/agenda";
@@ -27,7 +28,7 @@
       {#each todayItems as e (e.id)}
         <li class={e.kind}>
           <span class="when">{label(e)}</span>
-          <span class="what">{e.kind === "memo" ? "📌" : "📅"} {e.title}</span>
+          <span class="what"><Icon name={e.kind === "memo" ? "pin" : "calendar"} size={14} /> {e.title}</span>
           {#if e.location}<span class="loc">{e.location}</span>{/if}
         </li>
       {/each}
@@ -50,7 +51,7 @@
   }
   li.memo { border-left-color: var(--warn); }
   .when { color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .what { display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .loc { grid-column: 2; color: var(--text-muted); font-size: 12px; }
   .muted { color: var(--text-muted); }
   .small { font-size: 12px; margin-top: 8px; }

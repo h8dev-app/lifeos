@@ -43,7 +43,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div class="backdrop" onclick={oncancel} {onkeydown}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="nn-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+  <div class="dialog glass-strong" role="dialog" aria-modal="true" aria-labelledby="nn-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
   <form onsubmit={submit}>
     <h2 id="nn-title">Nouvelle note</h2>
 

@@ -1,10 +1,13 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
   import { onMount } from "svelte";
   import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
   import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
-  import { ACCENT_CHOICES, ACCENTS, applyAppearance, paletteOf, resolveTheme, THEME_CHOICES, THEMES } from "../lib/theme";
+  import {
+    ACCENT_CHOICES, ACCENTS, applyAppearance, paletteOf, resolveTheme, STYLE_PRESETS, THEME_CHOICES, THEMES, type UiStyle,
+  } from "../lib/theme";
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
   import type { ProviderStatus } from "../lib/ai/provider";
@@ -61,6 +64,17 @@
   // Palette of the chosen theme, for the accent swatches (reactive on settings).
   const pal = $derived(paletteOf(resolveTheme(app.settings.theme, matchMedia("(prefers-color-scheme: dark)").matches), app.settings.accent));
 
+  /** A style also puts its panel opacity and blur in place (sliders can change them after). */
+  async function chooseStyle(style: UiStyle) {
+    const preset = STYLE_PRESETS[style];
+    await guard(async () => {
+      await saveSetting("style", style);
+      await saveSetting("panelOpacity", preset.panelOpacity);
+      await saveSetting("glassBlur", preset.glassBlur);
+    });
+    await reloadSettings();
+  }
+
   async function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     await guard(() => saveSetting(key, value));
     await reloadSettings();
@@ -72,7 +86,7 @@
     if (!value) return;
     const ok = await guard(async () => { await setSecret(name, value); return true; });
     keyInput[name] = ""; // never keep the key in the page
-    if (ok) say("✓ Clé enregistrée dans le trousseau système.", "ok");
+    if (ok) say("Clé enregistrée dans le trousseau système.", "ok");
     await refreshKeys();
     refreshStatus();
   }
@@ -87,6 +101,23 @@
 
 <section class="glass">
   <h2>Apparence</h2>
+  <p class="label">Style</p>
+  <div class="styles" role="radiogroup" aria-label="Style">
+    {#each [
+      { id: "sobre", label: "Sobre", hint: "Panneaux plats, bordures fines" },
+      { id: "glass", label: "Liquid glass", hint: "Verre translucide, reflets, lumière qui suit la souris" },
+    ] as const as st (st.id)}
+      <button role="radio" aria-checked={app.settings.style === st.id} class="style" class:on={app.settings.style === st.id}
+        onclick={() => chooseStyle(st.id)}>
+        <span class="sprev">
+          <span class="spanel" class:flat={st.id === "sobre"} class:glassy={st.id === "glass"}></span>
+          <span class="spanel small" class:flat={st.id === "sobre"} class:glassy={st.id === "glass"}></span>
+        </span>
+        <span class="stext"><strong>{st.label}</strong><small>{st.hint}</small></span>
+      </button>
+    {/each}
+  </div>
+
   <p class="label">Thème</p>
   <div class="themes" role="radiogroup" aria-label="Thème">
     {#each THEME_CHOICES as id (id)}
@@ -194,8 +225,8 @@
 
   <p class="status">
     {#if status === null}Vérification…
-    {:else if status.ok}<span class="ok">✓ Prêt</span>
-    {:else}<span class="err">✗ {status.reason}</span>{/if}
+    {:else if status.ok}<span class="ok"><Icon name="circle-check" size={14} /> Prêt</span>
+    {:else}<span class="err"><Icon name="circle-alert" size={14} /> {status.reason}</span>{/if}
     <button class="link" onclick={refreshStatus}>Revérifier</button>
   </p>
 
@@ -232,7 +263,7 @@
     <div class="key">
       <label for={k.name}>{k.label}</label>
       {#if keySet[k.name]}
-        <span class="ok">✓ enregistrée</span>
+        <span class="ok"><Icon name="check" size={14} /> enregistrée</span>
         <button onclick={() => removeKey(k.name)}>Supprimer</button>
       {:else}
         <input id={k.name} type="password" autocomplete="off" placeholder="Colle ta clé ici"
@@ -253,6 +284,28 @@
   section > h2:first-child { border-top: none; padding-top: 16px; }
   .label { margin: 14px 0 8px; font-size: 13px; color: var(--text-muted); }
 
+  .styles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .style {
+    display: flex; align-items: center; gap: 12px; padding: 10px; text-align: left;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .style:hover { transform: translateY(-1px); border-color: var(--text-muted); }
+  .style.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .stext { display: flex; flex-direction: column; gap: 2px; }
+  .sprev {
+    position: relative; flex-shrink: 0; width: 76px; height: 52px; border-radius: 8px; overflow: hidden;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 30%, var(--veil)));
+  }
+  .spanel { position: absolute; left: 8px; top: 8px; width: 46px; height: 30px; border-radius: 6px; }
+  .spanel.small { left: 30px; top: 22px; width: 38px; height: 22px; }
+  .spanel.flat { background: var(--panel); border: 1px solid var(--border); }
+  .spanel.glassy {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  .theme:hover { transform: translateY(-2px); }
+  .accent:hover { transform: scale(1.08); }
   .themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
   .theme {
     display: flex; flex-direction: column; gap: 6px; padding: 6px; background: none;

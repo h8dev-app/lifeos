@@ -18,10 +18,42 @@ export function onBeforeHide(fn: () => Promise<void> | void): () => void {
   return () => beforeHide.delete(fn);
 }
 
-/** Escape key: flush pending work, then hide. */
+const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const root = () => document.getElementById("app");
+
+/** Escape key: flush pending work, fade out, then hide. */
 export async function closeOverlay(): Promise<void> {
   await Promise.allSettled([...beforeHide].map((fn) => fn()));
+  const el = root();
+  if (el && !reducedMotion()) {
+    await el.animate([{ opacity: 1 }, { opacity: 0, transform: "scale(0.985)" }],
+      { duration: 140, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "forwards" }).finished.catch(() => {});
+  }
   await hideOverlay();
+}
+
+/**
+ * Entry animation each time the overlay appears. While hidden, the page is
+ * kept transparent so it never flashes at full opacity before fading in.
+ */
+export function setupOverlayAnimation(): Promise<UnlistenFn[]> {
+  return Promise.all([
+    listen("overlay://hidden", () => {
+      const el = root();
+      if (!el) return;
+      el.getAnimations().forEach((a) => a.cancel());
+      el.style.opacity = "0";
+    }),
+    listen("overlay://shown", () => {
+      const el = root();
+      if (!el) return;
+      el.getAnimations().forEach((a) => a.cancel());
+      el.style.opacity = "";
+      if (reducedMotion()) return;
+      el.animate([{ opacity: 0, transform: "scale(0.985)" }, { opacity: 1, transform: "none" }],
+        { duration: 240, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+    }),
+  ]);
 }
 
 /**

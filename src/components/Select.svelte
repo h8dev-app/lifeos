@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   // Drop-down list drawn by the app. Native <select> lists are drawn by GTK on
   // Linux and ignore the app colors (white text on white), so we don't use them.
   let {
@@ -89,10 +90,10 @@
     aria-haspopup="listbox" aria-expanded={open} aria-label={label} onclick={toggle} {onkeydown}>
     {#if current?.color && mode === "value"}<span class="dot" style:background={current.color}></span>{/if}
     <span class="text">{shown}</span>
-    <span class="caret" aria-hidden="true">▾</span>
+    <span class="caret" aria-hidden="true"><Icon name="chevron-down" size={14} /></span>
   </button>
   {#if open}
-    <ul class="menu" class:up role="listbox" aria-label={label} bind:this={list}>
+    <ul class="menu glass-strong anim-drop" class:up role="listbox" aria-label={label} bind:this={list}>
       {#each options as o, i (o.value)}
         <!-- Keyboard is handled on the button (arrows, Enter, Escape). -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -102,7 +103,7 @@
           onclick={() => choose(o)} onmouseenter={() => !o.disabled && (active = i)}>
           {#if o.color}<span class="dot" style:background={o.color}></span>{/if}
           <span class="text">{o.label}</span>
-          {#if o.value === value && mode === "value"}<span class="tick">✓</span>{/if}
+          {#if o.value === value && mode === "value"}<span class="tick"><Icon name="check" size={14} /></span>{/if}
         </li>
       {/each}
     </ul>

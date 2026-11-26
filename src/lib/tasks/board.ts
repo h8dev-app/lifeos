@@ -9,10 +9,11 @@ export const STATUSES: { id: TaskStatus; label: string }[] = [
   { id: "done", label: "Fait" },
 ];
 
-export const PRIORITIES: { id: Priority; label: string; dot: string }[] = [
-  { id: 1, label: "Haute", dot: "🔴" },
-  { id: 2, label: "Moyenne", dot: "🟠" },
-  { id: 3, label: "Basse", dot: "⚪" },
+/** `color`: CSS color of the priority dot (theme tokens). */
+export const PRIORITIES: { id: Priority; label: string; color: string }[] = [
+  { id: 1, label: "Haute", color: "var(--error)" },
+  { id: 2, label: "Moyenne", color: "var(--warn)" },
+  { id: 3, label: "Basse", color: "var(--text-muted)" },
 ];
 
 export const priorityOf = (p: number) => PRIORITIES.find((x) => x.id === p) ?? PRIORITIES[1];

@@ -133,6 +133,10 @@ describe("parseCatArgs", () => {
       ],
     });
   });
+  it("icon as a Lucide name", () => {
+    expect(parseCatArgs("lecture icone:Book-Open pages:nombre")).toMatchObject({ icon: "book-open", fields: [{ key: "pages" }] });
+    expect(parseCatArgs("musique icon:music")).toMatchObject({ icon: "music", fields: [] });
+  });
   it("name only", () => {
     expect(parseCatArgs("méditation")).toEqual({ slug: "meditation", name: "Méditation", icon: null, fields: [] });
   });

@@ -17,6 +17,8 @@ export interface Settings {
   weeklyReviewAuto: boolean;
   /** Veil over the background (wallpaper or windows), 0 (clear) to 0.95. */
   overlayOpacity: number;
+  /** Look of the panels: "sobre" (flat) or "glass" (liquid glass). */
+  style: string;
   /** Color theme (theme.ts), "auto" follows the system. */
   theme: string;
   /** Accent color (theme.ts), "theme" = the theme's own. */
@@ -37,6 +39,7 @@ export const DEFAULT_SETTINGS: Settings = {
   githubUser: "",
   weeklyReviewAuto: true,
   overlayOpacity: 0.3,
+  style: "sobre",
   theme: "graphite",
   accent: "theme",
   backgroundMode: "transparent",

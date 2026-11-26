@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { onMount } from "svelte";
   import { app } from "../lib/app.svelte";
   import type { Task } from "../lib/db/tasks";
@@ -65,7 +66,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div class="backdrop" onclick={oncancel} {onkeydown}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="td-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+  <div class="dialog glass-strong" role="dialog" aria-modal="true" aria-labelledby="td-title" tabindex="-1" onclick={(e) => e.stopPropagation()}>
     <form onsubmit={submit}>
       <h2 id="td-title">{task ? "Modifier la tâche" : "Nouvelle tâche"}</h2>
 
@@ -75,7 +76,7 @@
       <div class="seg" role="radiogroup" aria-label="Priorité">
         {#each PRIORITIES as p (p.id)}
           <button type="button" role="radio" aria-checked={priority === p.id} class:on={priority === p.id} onclick={() => (priority = p.id)}>
-            {p.dot} {p.label}
+            <span class="pdot" style:background={p.color}></span> {p.label}
           </button>
         {/each}
       </div>
@@ -110,7 +111,7 @@
           {#if confirmDelete}
             <button type="button" class="danger" onclick={ondelete}>Confirmer la suppression</button>
           {:else}
-            <button type="button" class="ghost" onclick={() => (confirmDelete = true)}>🗑 Supprimer</button>
+            <button type="button" class="ghost" onclick={() => (confirmDelete = true)}><Icon name="trash-2" size={14} /> Supprimer</button>
           {/if}
         {/if}
         <span class="grow"></span>
@@ -122,6 +123,7 @@
 </div>
 
 <style>
+  .pdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
   .backdrop {
     position: fixed; inset: 0; z-index: 10; background: var(--backdrop);
     display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh;

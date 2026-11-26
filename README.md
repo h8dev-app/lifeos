@@ -36,7 +36,7 @@ Tape `/` dans la barre : la liste des commandes s'affiche (↑ ↓, `Tab` ou `En
 | `/commande ubereats 18€` | service, montant (`18,50€`, `18.5 €`) |
 | `/cuisine pâtes carbo` | plat |
 | `/devoirs maths 45min exercices p.12` | matière, durée, note |
-| `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
+| `/cat lecture icone:book-open livre:texte pages:nombre` | crée la catégorie `/lecture` (icône [Lucide](https://lucide.dev)) |
 | `/tache rendre le dossier #Cours !haute @vendredi` | tâche (catégorie, priorité `!haute`/`!moyenne`/`!basse` et échéance optionnelles) |
 | `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
 | `/rdv Dentiste @demain 14h30 *Cabinet_Dupont` | rendez-vous (heure ou plage `9h-10h30`, lieu `*…` optionnel) |
@@ -216,3 +216,9 @@ Activé automatiquement au premier lancement d'un **build de release** (pas en d
 - Fedora : `~/.local/share/com.henri.lifeos/`
 
 Contenu : `lifeos.db` (SQLite), `notes/` (fichiers Markdown), `settings.json` (réglages non sensibles). Les clés API sont dans le trousseau système, pas dans ce dossier.
+
+## Apparence
+
+Réglages → Apparence : style **Sobre** ou **Liquid glass**, thème (Auto, Graphite, Nuit, Forêt, Clair, Sable), couleur d'accent, fond **Transparent** (les fenêtres restent visibles derrière LifeOS) ou **Fond d'écran**, voile, opacité et flou des panneaux.
+
+Icônes : [Lucide](https://lucide.dev) (licence ISC).

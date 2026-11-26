@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
+  import CategoryIcon from "./CategoryIcon.svelte";
   import { app } from "../lib/app.svelte";
   import { formatEntryData } from "../lib/format";
   import { formatWhen } from "../lib/clock";
@@ -13,16 +15,16 @@
 </script>
 
 {#if category}
-  <div class="preview glass-strong" role="dialog" aria-label="Aperçu de l'entrée proposée par l'IA">
+  <div class="preview glass-strong anim-drop" role="dialog" aria-label="Aperçu de l'entrée proposée par l'IA">
     <p class="src">« {entry.text} »</p>
     <div class="row">
-      <span class="dot" style:background={category.color ?? "var(--text-muted)"}></span>
-      <strong>{category.icon ?? ""} {category.name}</strong>
+      <CategoryIcon icon={category.icon} color={category.color} />
+      <strong>{category.name}</strong>
       <span class="data">{formatEntryData(category, entry.data)}</span>
       <span class="when">{formatWhen(entry.occurredAt)}</span>
     </div>
     <div class="actions">
-      <button bind:this={saveButton} class="ok" onclick={onconfirm}>Enregistrer ↵</button>
+      <button bind:this={saveButton} class="ok" onclick={onconfirm}>Enregistrer <Icon name="corner-down-left" size={14} /></button>
       <button onclick={oncancel}>Annuler (Échap)</button>
     </div>
   </div>
@@ -38,7 +40,6 @@
   }
   .src { margin: 0; color: var(--text-muted); font-size: 13px; font-style: italic; }
   .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; }
   .data { flex: 1; }
   .when { color: var(--text-muted); font-size: 13px; }
   .actions { display: flex; gap: 8px; justify-content: flex-end; }

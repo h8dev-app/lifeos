@@ -69,8 +69,8 @@ const stats: WeekStats = {
 describe("markdown", () => {
   it("stats section", () => {
     const md = renderStatsMarkdown(stats);
-    expect(md).toContain("- **🏃 Sport** : 3 entrées sur 2 jours · Distance : 12,5 km · Durée : 1 h 18");
-    expect(md).toContain("- **🍳 Cuisine** : 1 entrée sur 1 jour");
+    expect(md).toContain("- **Sport** : 3 entrées sur 2 jours · Distance : 12,5 km · Durée : 1 h 18");
+    expect(md).toContain("- **Cuisine** : 1 entrée sur 1 jour");
     expect(md).toContain("- En retard : rendre dossier");
     expect(md).toContain("Temps actif : 10 h 00 (moyenne 2 h 00 par jour suivi).");
     expect(md).toContain("| Fire/fox | 2 h 30 |");

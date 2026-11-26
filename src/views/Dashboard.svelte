@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
   import { onDestroy, onMount } from "svelte";
   import { formatDate, formatTime } from "../lib/clock";
   import RecentEntries from "../components/RecentEntries.svelte";
@@ -37,7 +38,7 @@
 
   // ------------------------------------------------------------ layout
   // Free placement: rectangles in fractions of the home area, overlap
-  // allowed, last touched on top. Layout mode (⚙ Disposer) to edit.
+  // allowed, last touched on top. Layout mode (Disposer) to edit.
   let layout = $state<Rect[]>(defaultLayout());
   let editing = $state(false);
   let area: HTMLDivElement;
@@ -127,7 +128,7 @@
       <button class="primary" onclick={() => (editing = false)}>Terminé</button>
     {:else}
       <span class="grow"></span>
-      <button class="ghost edit" onclick={() => (editing = true)} title="Déplacer, redimensionner, masquer les blocs">⚙ Disposer</button>
+      <button class="ghost edit" onclick={() => (editing = true)} title="Déplacer, redimensionner, masquer les blocs"><Icon name="layout-dashboard" size={14} /> Disposer</button>
     {/if}
   </div>
 
@@ -135,11 +136,12 @@
     {#if layout.length === 0 && !editing}
       <p class="empty-all">Accueil vide. <button class="link" onclick={() => (editing = true)}>Ajouter des blocs</button></p>
     {/if}
-    {#each ordered as id (id)}
+    {#each ordered as id, i (id)}
       {@const r = layout.find((o) => o.id === id)!}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
       <section
-        class="w w-{r.id} glass"
+        class="w w-{r.id} glass anim-rise"
+        style:animation-delay="{i * 45}ms"
         class:dragging={drag?.id === r.id}
         style:left={pct(r.x)} style:top={pct(r.y)} style:width={pct(r.w)} style:height={pct(r.h)}
         style:z-index={zOf(r.id)}
@@ -154,7 +156,7 @@
         {#if editing}
           <header class="bar">
             <button class="x" onpointerdown={(e) => e.stopPropagation()} onclick={() => commit(removeWidget(layout, r.id))}
-              aria-label="Masquer {WIDGETS[r.id].label}" title="Masquer">✕</button>
+              aria-label="Masquer {WIDGETS[r.id].label}" title="Masquer"><Icon name="x" size={12} /></button>
           </header>
         {/if}
         <div class="body">

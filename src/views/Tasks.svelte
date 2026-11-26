@@ -1,4 +1,13 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
+  import { flip } from "svelte/animate";
+  import { crossfade, scale } from "svelte/transition";
+
+  // A card moved to another column flies there; others slide into place.
+  const [send, receive] = crossfade({
+    duration: 280,
+    fallback: (node) => scale(node, { start: 0.94, duration: 180 }),
+  });
   import { onMount } from "svelte";
   import TaskCard from "../components/TaskCard.svelte";
   import TaskDialog, { type TaskForm } from "../components/TaskDialog.svelte";
@@ -159,7 +168,7 @@
         <button class="chip-x" class:confirm={confirmCatDelete === c.id} onclick={() => removeCategory(c.id)}
           onblur={() => (confirmCatDelete = null)}
           title="Supprimer la catégorie" aria-label="Supprimer la catégorie {c.name}">
-          {confirmCatDelete === c.id ? "Supprimer ?" : "×"}
+          {#if confirmCatDelete === c.id}Supprimer ?{:else}<Icon name="x" size={12} />{/if}
         </button>
       </span>
     {/each}
@@ -172,10 +181,10 @@
         onkeydown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { e.stopPropagation(); newCatMode = false; } }}
         onblur={addCategory} />
     {:else}
-      <button class="chip add" onclick={() => (newCatMode = true)}>＋ Catégorie</button>
+      <button class="chip add" onclick={() => (newCatMode = true)}><Icon name="plus" size={13} /> Catégorie</button>
     {/if}
     <span class="grow"></span>
-    <button class="new" onclick={() => (creating = "todo")}>＋ Nouvelle tâche</button>
+    <button class="new" onclick={() => (creating = "todo")}><Icon name="plus" size={15} /> Nouvelle tâche</button>
   </div>
 
   <div class="columns">
@@ -188,18 +197,20 @@
           <h2>{col.label} <span class="n">{columns[col.id].length}</span></h2>
           <div class="col-actions">
             {#if columns[col.id].length}
-              <button class="mini" onclick={() => selectColumn(col.id)} title="Tout sélectionner">☐</button>
+              <button class="mini" onclick={() => selectColumn(col.id)} title="Tout sélectionner" aria-label="Tout sélectionner"><Icon name="square-check" size={14} /></button>
             {/if}
-            <button class="mini" onclick={() => (creating = col.id)} title="Ajouter une tâche ici" aria-label="Ajouter dans {col.label}">＋</button>
+            <button class="mini" onclick={() => (creating = col.id)} title="Ajouter une tâche ici" aria-label="Ajouter dans {col.label}"><Icon name="plus" size={15} /></button>
           </div>
         </header>
         <div class="cards">
           {#each columns[col.id] as t (t.id)}
-            <TaskCard task={t} selected={selected.has(t.id)} {selecting}
-              onselect={() => toggle(t.id)}
-              onopen={() => (editing = t)}
-              oncycle={() => run(() => setTasksPriority([t.id], nextPriority(t.priority)))}
-              ondragstart={(e) => dragStart(e, t)} />
+            <div class="slot" in:receive={{ key: t.id }} out:send={{ key: t.id }} animate:flip={{ duration: 280 }}>
+              <TaskCard task={t} selected={selected.has(t.id)} {selecting}
+                onselect={() => toggle(t.id)}
+                onopen={() => (editing = t)}
+                oncycle={() => run(() => setTasksPriority([t.id], nextPriority(t.priority)))}
+                ondragstart={(e) => dragStart(e, t)} />
+            </div>
           {:else}
             <p class="empty">{col.id === "done" ? "Rien de fini ces 7 derniers jours." : "Glisse une tâche ici."}</p>
           {/each}
@@ -209,20 +220,20 @@
   </div>
 
   {#if selecting}
-    <div class="selbar" role="toolbar" aria-label="Actions sur la sélection">
+    <div class="selbar glass-strong anim-drop" role="toolbar" aria-label="Actions sur la sélection">
       <strong>{selected.size} sélectionnée{selected.size > 1 ? "s" : ""}</strong>
       <span class="sep"></span>
       {#each STATUSES as s (s.id)}
-        <button onclick={() => bulkStatus(s.id)}>→ {s.label}</button>
+        <button onclick={() => bulkStatus(s.id)}><Icon name="arrow-right" size={13} /> {s.label}</button>
       {/each}
       <Select up label="Priorité" mode="action" placeholder="Priorité…"
         onchange={(v) => bulkPriority(Number(v) as Priority)}
-        options={PRIORITIES.map((p) => ({ value: String(p.id), label: `${p.dot} ${p.label}` }))} />
+        options={PRIORITIES.map((p) => ({ value: String(p.id), label: p.label, color: p.color }))} />
       <Select up label="Catégorie" mode="action" placeholder="Catégorie…" onchange={bulkCategory} options={[
         ...app.taskCategories.map((c) => ({ value: c.id, label: c.name, color: c.color })),
         { value: NONE, label: "Sans catégorie" },
       ]} />
-      <button class="danger" onclick={bulkDelete}>{confirmBulkDelete ? "Confirmer la suppression" : "🗑 Supprimer"}</button>
+      <button class="danger" onclick={bulkDelete}>{#if confirmBulkDelete}Confirmer la suppression{:else}<Icon name="trash-2" size={14} /> Supprimer{/if}</button>
       <span class="grow"></span>
       <button class="ghost" onclick={clearSelection}>Annuler (Échap)</button>
     </div>

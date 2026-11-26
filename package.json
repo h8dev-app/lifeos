@@ -1,6 +1,6 @@
 {
   "name": "lifeos",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@lucide/svelte": "^1.81.0",
     "@tauri-apps/api": "^2.12.5",
     "@tauri-apps/plugin-autostart": "^2.7.0",
     "@tauri-apps/plugin-fs": "^2.7.1",

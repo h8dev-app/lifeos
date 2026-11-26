@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from "../components/Icon.svelte";
+  import CategoryIcon from "../components/CategoryIcon.svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { app } from "../lib/app.svelte";
   import { addDays, formatDay, today } from "../lib/dates";
@@ -45,16 +47,16 @@
 
 <section class="glass">
   <div class="daynav">
-    <button onclick={() => (day = addDays(day, -1))} aria-label="Jour précédent">←</button>
+    <button onclick={() => (day = addDays(day, -1))} aria-label="Jour précédent"><Icon name="chevron-left" /></button>
     <h2>{formatDay(day)}</h2>
-    <button onclick={() => (day = addDays(day, 1))} disabled={isToday} aria-label="Jour suivant">→</button>
+    <button onclick={() => (day = addDays(day, 1))} disabled={isToday} aria-label="Jour suivant"><Icon name="chevron-right" /></button>
   </div>
 
   {#if aw && !aw.ok}
     <div class="notice">
       <p>{aw.reason}</p>
       <p class="muted">Le temps par application vient d'ActivityWatch, un logiciel libre qui tourne en local. Les saisies et les pushs GitHub restent visibles ci-dessous.</p>
-      <button class="link" onclick={() => openUrl(AW_DOWNLOAD_URL)}>Installer ActivityWatch ↗</button>
+      <button class="link" onclick={() => openUrl(AW_DOWNLOAD_URL)}>Installer ActivityWatch <Icon name="external-link" size={13} /></button>
     </div>
   {/if}
 
@@ -94,8 +96,8 @@
             {@const cat = byId.get(item.categoryId)}
             <li class="entry">
               <span class="time">{formatTime(new Date(item.at))}</span>
-              <span class="dot" style:background={cat?.color ?? "var(--text-muted)"}></span>
-              <span><strong>{cat?.icon ?? ""} {cat?.name ?? "?"}</strong>
+              <CategoryIcon icon={cat?.icon} color={cat?.color} />
+              <span><strong>{cat?.name ?? "?"}</strong>
                 {#if cat && e}<span class="muted"> {formatEntryData(cat, e.data)}</span>{/if}
                 {#if item.source !== "manual"}<span class="src">{item.source === "ai" ? "IA" : item.source}</span>{/if}
               </span>
@@ -147,7 +149,6 @@
   .titles li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .timeline li { display: grid; grid-template-columns: 48px 12px 1fr; gap: 10px; align-items: center; padding: 5px 0; }
   .time { color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; }
   .line { width: 2px; height: 18px; background: var(--border); margin-left: 4px; }
   .activity { font-size: 13px; }
   .src { margin-left: 6px; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--surface-strong); color: var(--text-muted); }

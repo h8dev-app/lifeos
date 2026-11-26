@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
+  import { flip } from "svelte/animate";
   import { guard, reloadTasks } from "../lib/app.svelte";
   import { deleteTask, postponeTask, setTaskDone, type Task } from "../lib/db/tasks";
   import { formatDay, today } from "../lib/dates";
@@ -14,25 +16,25 @@
 
 <ul>
   {#each tasks as t (t.id)}
-    <li class:done={t.doneAt}>
+    <li class:done={t.doneAt} animate:flip={{ duration: 240 }}>
       <input
         type="checkbox"
         checked={!!t.doneAt}
         onchange={(e) => run(() => setTaskDone(t.id, e.currentTarget.checked))}
         aria-label="Faite"
       />
-      <span class="prio" title="Priorité {priorityOf(t.priority).label.toLowerCase()}">{priorityOf(t.priority).dot}</span>
+      <span class="prio" title="Priorité {priorityOf(t.priority).label.toLowerCase()}" style:background={priorityOf(t.priority).color}></span>
       <span class="title">{t.title}</span>
       {#if t.categoryId}
         {@const cat = app.taskCategories.find((c) => c.id === t.categoryId)}
         {#if cat}<span class="cat" style:color={cat.color}>#{cat.name}</span>{/if}
       {/if}
       {#if t.dueDate}
-        <span class="due" class:late={overdue(t)} title="Échéance">⏰ {formatDay(t.dueDate)}</span>
+        <span class="due" class:late={overdue(t)} title="Échéance"><Icon name="alarm-clock" size={12} /> {formatDay(t.dueDate)}</span>
       {/if}
       {#if !compact && !t.doneAt}
-        <button onclick={() => run(() => postponeTask(t.id))} title="Reporter à demain">→ demain</button>
-        <button class="del" onclick={() => run(() => deleteTask(t.id))} aria-label="Supprimer">×</button>
+        <button onclick={() => run(() => postponeTask(t.id))} title="Reporter à demain"><Icon name="arrow-right" size={13} /> demain</button>
+        <button class="del" onclick={() => run(() => deleteTask(t.id))} aria-label="Supprimer"><Icon name="x" size={15} /></button>
       {/if}
     </li>
   {/each}
@@ -45,7 +47,7 @@
     padding: 8px 12px; background: var(--surface); border-radius: 8px;
   }
   input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
-  .prio { font-size: 10px; }
+  .prio { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .cat { font-size: 12px; white-space: nowrap; }
   .title { flex: 1; }
   .done .title { text-decoration: line-through; color: var(--text-muted); }

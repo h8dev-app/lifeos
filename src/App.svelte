@@ -22,7 +22,8 @@
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
   import { app, guard, reloadEntries, reloadNoteFolders, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
-  import { closeOverlay, consumeEscape, onOverlayShown } from "./lib/overlay";
+  import { closeOverlay, consumeEscape, onOverlayShown, setupOverlayAnimation } from "./lib/overlay";
+  import { trackGlassPointer } from "./lib/ui/glass";
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
   import { addTask, ensureTaskCategory } from "./lib/db/tasks";
@@ -44,7 +45,7 @@
       switch (r.kind) {
         case "entry":
           await addEntry(r.category.id, r.data);
-          say(`✓ ${r.category.icon ?? ""} ${r.category.name} : ${formatEntryData(r.category, r.data)}`, "ok");
+          say(`${r.category.name} : ${formatEntryData(r.category, r.data)}`, "ok");
           await reloadEntries();
           return true;
         case "builtin":
@@ -103,7 +104,7 @@
       await addEntry(p.categoryId, p.data, "ai", p.occurredAt);
       app.pending = null;
       await reloadEntries();
-      if (category) say(`✓ ${category.icon ?? ""} ${category.name} : ${formatEntryData(category, p.data)}`, "ok");
+      if (category) say(`${category.name} : ${formatEntryData(category, p.data)}`, "ok");
     });
     bar.focus();
   }
@@ -140,7 +141,7 @@
       parsed.priority && priorityOf(parsed.priority).label.toLowerCase(),
       parsed.dueDate && `échéance ${formatDay(parsed.dueDate)}`,
     ].filter(Boolean);
-    say(`✓ Tâche ajoutée${bits.length ? ` (${bits.join(", ")})` : ""}.`, "ok");
+    say(`Tâche ajoutée${bits.length ? ` (${bits.join(", ")})` : ""}.`, "ok");
     return true;
   }
 
@@ -157,7 +158,7 @@
     });
     app.agendaVersion++;
     const when = `${formatDay(p.day)}${p.start !== null ? ` à ${formatMinutes(p.start)}` : ""}`;
-    say(`✓ ${kind === "memo" ? "📌 Pense-bête" : "📅 Rendez-vous"} « ${p.title} » ${when}.`, "ok");
+    say(`${kind === "memo" ? "Pense-bête" : "Rendez-vous"} « ${p.title} » ${when}.`, "ok");
     return true;
   }
 
@@ -166,7 +167,7 @@
   function openReview(r: ReviewResult, prefix: string) {
     app.openNoteId = r.note.id;
     app.view = "notes";
-    say(r.ai ? `✓ ${prefix}` : `${prefix} (chiffres seulement, IA indisponible : ${r.reason})`, r.ai ? "ok" : "error");
+    say(r.ai ? `${prefix}` : `${prefix} (chiffres seulement, IA indisponible : ${r.reason})`, r.ai ? "ok" : "error");
   }
 
   /** `/bilan` (this week) or `/bilan -1` (last week): generate and open the note. */
@@ -190,7 +191,7 @@
     reviewBusy = true;
     try {
       const r = await autoReviewIfDue();
-      if (r) say(r.ai ? `📝 Ton bilan de la semaine dernière est prêt (Notes, Ctrl+3).` : `📝 Bilan de la semaine dernière créé sans texte IA (${r.reason}).`, r.ai ? "ok" : "info");
+      if (r) say(r.ai ? `Ton bilan de la semaine dernière est prêt (Notes, Ctrl+3).` : `Bilan de la semaine dernière créé sans texte IA (${r.reason}).`, r.ai ? "ok" : "info");
     } catch (e) {
       console.error("auto review", e);
     } finally {
@@ -224,7 +225,7 @@
     await createCategory(parsed);
     await reloadEntries();
     const fields = parsed.fields.map((f) => f.label).join(", ") || "texte libre en note";
-    say(`✓ Catégorie ${parsed.icon ?? ""} /${parsed.slug} créée (${fields}).`, "ok");
+    say(`Catégorie /${parsed.slug} créée (${fields}).`, "ok");
     return true;
   }
 
@@ -276,7 +277,11 @@
       if (app.view === "claude") document.querySelector<HTMLElement>(".xterm-helper-textarea")?.focus();
       else if (app.view !== "notes") bar.focus();
     });
+    const animations = setupOverlayAnimation();
+    const stopGlass = trackGlassPointer();
     return () => {
+      animations.then((fs) => fs.forEach((f) => f()));
+      stopGlass();
       unlisten.then((f) => f());
       clearInterval(githubTimer);
       clearInterval(reminderTimer);
@@ -296,12 +301,19 @@
 <main>
   <Nav />
   <div class="content">
-    {#if app.view === "dashboard"}<Dashboard />
-    {:else if app.view === "tasks"}<Tasks />
-    {:else if app.view === "agenda"}<Agenda />
-    {:else if app.view === "notes"}<Notes />
-    {:else if app.view === "activity"}<Activity />
-    {:else if app.view === "settings"}<Settings />{/if}
+    {#if app.view !== "claude"}
+      <!-- Re-created on each view change: plays the entry animation. -->
+      {#key app.view}
+        <div class="view anim-rise">
+          {#if app.view === "dashboard"}<Dashboard />
+          {:else if app.view === "tasks"}<Tasks />
+          {:else if app.view === "agenda"}<Agenda />
+          {:else if app.view === "notes"}<Notes />
+          {:else if app.view === "activity"}<Activity />
+          {:else if app.view === "settings"}<Settings />{/if}
+        </div>
+      {/key}
+    {/if}
     <!-- Kept mounted once opened, so the claude session survives view changes. -->
     {#if app.claude.opened || app.view === "claude"}
       <div class="panel" class:hidden={app.view !== "claude"}><Claude /></div>
@@ -340,7 +352,11 @@
   .bg::after { content: ""; position: absolute; inset: 0; background: color-mix(in srgb, var(--veil) var(--overlay-tint), transparent); }
   .content { flex: 1; overflow: hidden; min-height: 0; display: flex; flex-direction: column; }
   .content > :global(*) { flex: 1; min-height: 0; }
+  .view { display: flex; flex-direction: column; }
+  .view > :global(*) { flex: 1; min-height: 0; }
   .panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  /* Shown again (display none → flex) replays the entry animation. */
+  .panel:not(.hidden) { animation: lifeos-rise 360ms var(--ease) backwards; }
   .panel.hidden { display: none; }
   footer { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; flex-shrink: 0; }
 </style>

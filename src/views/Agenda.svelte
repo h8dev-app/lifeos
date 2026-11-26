@@ -1,4 +1,7 @@
 <script lang="ts">
+  import CategoryIcon from "../components/CategoryIcon.svelte";
+  import Icon from "../components/Icon.svelte";
+  import type { IconName } from "../lib/ui/iconNames";
   import { onMount } from "svelte";
   import EventDialog from "../components/EventDialog.svelte";
   import { app, guard, reloadTasks, say } from "../lib/app.svelte";
@@ -123,7 +126,7 @@
       if (ev) await updateEvent(ev.id, input);
       else await createEvent(input);
     });
-    say(`✓ ${input.kind === "memo" ? "Pense-bête" : "Rendez-vous"} enregistré.`, "ok");
+    say(`${input.kind === "memo" ? "Pense-bête" : "Rendez-vous"} enregistré.`, "ok");
     await load();
   }
 
@@ -205,9 +208,9 @@
 <section class="agenda">
   <div class="toolbar glass">
     <div class="nav">
-      <button onclick={() => shift(-1)} aria-label="Précédent">←</button>
+      <button onclick={() => shift(-1)} aria-label="Précédent"><Icon name="chevron-left" /></button>
       <button onclick={() => (anchor = t)}>Aujourd'hui</button>
-      <button onclick={() => shift(1)} aria-label="Suivant">→</button>
+      <button onclick={() => shift(1)} aria-label="Suivant"><Icon name="chevron-right" /></button>
     </div>
     <h2>{title}</h2>
     <div class="seg" role="group" aria-label="Vue">
@@ -215,12 +218,12 @@
       <button class:on={mode === "month"} onclick={() => (mode = "month")}>Mois</button>
     </div>
     <span class="grow"></span>
-    <button class="secondary" onclick={() => openNew("memo")}>📌 Pense-bête</button>
-    <button class="primary" onclick={() => openNew("event")}>＋ Rendez-vous</button>
+    <button class="secondary" onclick={() => openNew("memo")}><Icon name="pin" size={15} /> Pense-bête</button>
+    <button class="primary" onclick={() => openNew("event")}><Icon name="plus" size={15} /> Rendez-vous</button>
   </div>
 
   {#if mode === "week"}
-    <div class="week glass">
+    <div class="week glass anim-fade">
       <!-- Day headers + all-day row -->
       <div class="head">
         <div class="gutter"></div>
@@ -234,23 +237,23 @@
               {#each allDayOf(d) as ev (ev.id)}
                 <button class="chip {ev.kind}" draggable="true" ondragstart={(e) => dragStart(e, ev)}
                   onclick={() => (dialog = { event: ev, initial: { kind: ev.kind, day: ev.day, start: null, end: null } })}>
-                  {ev.kind === "memo" ? "📌" : "📅"} {ev.title}
+                  <Icon name={ev.kind === "memo" ? "pin" : "calendar"} size={12} /> <span>{ev.title}</span>
                 </button>
               {/each}
               {#each tasksOf(d) as tk (tk.id)}
                 <label class="chip task" class:done={tk.status === "done"} title="Tâche (échéance)">
                   <input type="checkbox" checked={tk.status === "done"} onchange={(e) => toggleTask(tk.id, e.currentTarget.checked)} />
-                  <span>{priorityOf(tk.priority).dot} {tk.title}</span>
+                  <span class="pdot" style:background={priorityOf(tk.priority).color}></span><span>{tk.title}</span>
                 </label>
               {/each}
               {#each notesOf(d) as n (n.id)}
-                <button class="chip note" onclick={() => openNoteById(n.id)} title="Note modifiée ce jour">📝 {n.title ?? "Sans titre"}</button>
+                <button class="chip note" onclick={() => openNoteById(n.id)} title="Note modifiée ce jour"><Icon name="file-text" size={12} /> <span>{n.title ?? "Sans titre"}</span></button>
               {/each}
               {#each entriesOf(d) as en (en.id)}
                 {@const cat = catOf(en.categoryId)}
                 {#if cat}
                   <span class="chip entry" title={formatEntryData(cat, en.data)} style:border-color={cat.color ?? "var(--border)"}>
-                    {cat.icon ?? "•"} {cat.name}
+                    <CategoryIcon icon={cat.icon} color={cat.color} size={12} /> <span>{cat.name}</span>
                   </span>
                 {/if}
               {/each}
@@ -282,7 +285,7 @@
                   style:width="calc({100 / p.cols}% - 4px)"
                   onclick={(e) => { e.stopPropagation(); dialog = { event: p.item, initial: { kind: p.item.kind, day: p.item.day, start: null, end: null } }; }}>
                   <span class="time">{formatMinutes(p.start)}{p.item.endAt ? `–${formatMinutes(p.end)}` : ""}</span>
-                  <span class="etitle">{p.item.kind === "memo" ? "📌 " : ""}{p.item.title}{p.item.noteId ? " 📝" : ""}</span>
+                  <span class="etitle">{#if p.item.kind === "memo"}<Icon name="pin" size={11} />{/if} {p.item.title}{#if p.item.noteId} <Icon name="file-text" size={11} />{/if}</span>
                   {#if p.item.location}<span class="loc">{p.item.location}</span>{/if}
                 </button>
               {/each}
@@ -293,22 +296,22 @@
       </div>
     </div>
   {:else}
-    <div class="month glass">
+    <div class="month glass anim-fade">
       {#each DAY_NAMES as n (n)}<div class="mname">{n}</div>{/each}
       {#each month as row, w (w)}
         {#each row as d (d)}
           {@const items = [
-            ...allDayOf(d).map((e) => ({ k: e.id, label: `${e.kind === "memo" ? "📌" : "📅"} ${e.title}` })),
-            ...timedOf(d).map((e) => ({ k: e.id, label: `${formatMinutes(minutesOf(e.startAt!))} ${e.title}` })),
-            ...tasksOf(d).map((x) => ({ k: x.id, label: `${x.status === "done" ? "✓" : "☐"} ${x.title}` })),
+            ...allDayOf(d).map((e) => ({ k: e.id, icon: (e.kind === "memo" ? "pin" : "calendar") as IconName, label: e.title })),
+            ...timedOf(d).map((e) => ({ k: e.id, icon: null, label: `${formatMinutes(minutesOf(e.startAt!))} ${e.title}` })),
+            ...tasksOf(d).map((x) => ({ k: x.id, icon: (x.status === "done" ? "square-check" : "square") as IconName, label: x.title })),
           ]}
           {@const extra = notesOf(d).length + entriesOf(d).length}
           <button class="cell" class:other={d.slice(0, 7) !== anchor.slice(0, 7)} class:today={d === t}
             onclick={() => { anchor = d; mode = "week"; }}>
             <span class="num">{Number(d.slice(8))}</span>
-            {#each items.slice(0, 3) as it (it.k)}<span class="mitem">{it.label}</span>{/each}
+            {#each items.slice(0, 3) as it (it.k)}<span class="mitem">{#if it.icon}<Icon name={it.icon} size={11} />{/if} {it.label}</span>{/each}
             {#if items.length > 3}<span class="more">+{items.length - 3}</span>{/if}
-            {#if extra}<span class="more">📝 {extra}</span>{/if}
+            {#if extra}<span class="more"><Icon name="file-text" size={11} /> {extra}</span>{/if}
           </button>
         {/each}
       {/each}
@@ -345,6 +348,8 @@
   .daylabel { display: block; width: 100%; background: none; border: none; border-radius: 0; padding: 6px; text-align: center; color: var(--text-muted); font-size: 13px; }
   .allday { display: flex; flex-direction: column; gap: 3px; padding: 4px; min-height: 30px; max-height: 120px; overflow: auto; }
   .allday.drop { background: var(--accent-soft); }
+  .pdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .chip span { overflow: hidden; text-overflow: ellipsis; }
   .chip {
     display: flex; align-items: center; gap: 4px; text-align: left; width: 100%;
     font-size: 12px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border);

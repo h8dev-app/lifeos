@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "./Icon.svelte";
   import { onMount } from "svelte";
   import { findCommand, type CommandDef } from "../lib/commands/registry";
 
@@ -49,12 +50,12 @@
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div class="backdrop" onclick={onclose} {onkeydown}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1" bind:this={box}
+  <div class="dialog glass-strong" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1" bind:this={box}
     onclick={(e) => e.stopPropagation()}>
     <header>
       <h2 id="help-title">Commandes</h2>
       <input placeholder="Filtrer…" bind:value={filter} aria-label="Filtrer les commandes" />
-      <button class="close" onclick={onclose} aria-label="Fermer">✕</button>
+      <button class="close" onclick={onclose} aria-label="Fermer"><Icon name="x" /></button>
     </header>
 
     <div class="body">
@@ -65,7 +66,7 @@
           {#each list as c (c.name)}
             <article id="help-{c.name}" class:focus={focus && findCommand(focus, commands)?.name === c.name}>
               <div class="line">
-                <span class="icon">{c.icon ?? ""}</span>
+                <span class="icon" style:color={c.color}>{#if c.icon}<Icon name={c.icon} />{/if}</span>
                 <code class="syntax">{c.syntax}</code>
               </div>
               <p class="sum">{c.summary}{c.aliases?.length ? ` · aussi /${c.aliases.join(", /")}` : ""}</p>
@@ -116,7 +117,7 @@
   article { padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; background: var(--surface); }
   article.focus { outline: 1px solid var(--accent); }
   .line { display: flex; align-items: center; gap: 8px; }
-  .icon { width: 20px; text-align: center; }
+  .icon { width: 20px; display: inline-flex; justify-content: center; color: var(--text-muted); }
   .syntax { font: 14px var(--mono); color: var(--accent); }
   .sum { margin: 4px 0 6px 28px; color: var(--text); font-size: 14px; }
   ul { margin: 0 0 6px 28px; padding: 0; list-style: none; font-size: 13px; color: var(--text-muted); }
