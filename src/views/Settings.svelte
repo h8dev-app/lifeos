@@ -3,7 +3,7 @@
   import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
-  import { applyOverlayOpacity, saveSetting, type ProviderId, type Settings } from "../lib/settings";
+  import { applyAppearance, saveSetting, type ProviderId, type Settings } from "../lib/settings";
   import { deleteSecret, secretExists, setSecret, type SecretName } from "../lib/secrets";
   import { getProvider } from "../lib/ai/registry";
   import type { ProviderStatus } from "../lib/ai/provider";
@@ -87,12 +87,26 @@
     <label for="opacity">Voile sombre</label>
     <div class="range">
       <input id="opacity" type="range" min="0" max="0.95" step="0.05" value={app.settings.overlayOpacity}
-        oninput={(e) => applyOverlayOpacity(Number(e.currentTarget.value))}
+        oninput={(e) => applyAppearance({ overlayOpacity: Number(e.currentTarget.value) })}
         onchange={(e) => set("overlayOpacity", Number(e.currentTarget.value))} />
       <span>{Math.round(app.settings.overlayOpacity * 100)} %</span>
     </div>
+    <label for="tint">Teinte des panneaux</label>
+    <div class="range">
+      <input id="tint" type="range" min="0" max="0.8" step="0.05" value={app.settings.glassTint}
+        oninput={(e) => applyAppearance({ glassTint: Number(e.currentTarget.value) })}
+        onchange={(e) => set("glassTint", Number(e.currentTarget.value))} />
+      <span>{Math.round(app.settings.glassTint * 100)} %</span>
+    </div>
+    <label for="blur">Flou des panneaux</label>
+    <div class="range">
+      <input id="blur" type="range" min="0" max="40" step="1" value={app.settings.glassBlur}
+        oninput={(e) => applyAppearance({ glassBlur: Number(e.currentTarget.value) })}
+        onchange={(e) => set("glassBlur", Number(e.currentTarget.value))} />
+      <span>{app.settings.glassBlur} px</span>
+    </div>
   </div>
-  <p class="hint">LifeOS affiche ton fond d'écran derrière ses panneaux en verre. À 0 %, le fond d'écran est net ; plus haut, il est assombri. Un nouveau fond d'écran est repris à la prochaine ouverture.</p>
+  <p class="hint">LifeOS affiche ton fond d'écran derrière ses panneaux en verre. Voile : assombrit tout le fond d'écran. Teinte et flou : à 0, les panneaux sont du verre clair qui laisse tout voir. Un nouveau fond d'écran est repris à la prochaine ouverture.</p>
 
   <h2>Démarrage</h2>
   <label class="check">

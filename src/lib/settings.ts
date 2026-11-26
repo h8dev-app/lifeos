@@ -17,6 +17,10 @@ export interface Settings {
   weeklyReviewAuto: boolean;
   /** Dark veil over the wallpaper, 0 (clear) to 0.95 (almost opaque). */
   overlayOpacity: number;
+  /** Dark tint inside glass panels, 0 (clear glass) to 0.8. */
+  glassTint: number;
+  /** Blur behind glass panels, in pixels (0 = clear glass). */
+  glassBlur: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   githubUser: "",
   weeklyReviewAuto: true,
   overlayOpacity: 0.35,
+  glassTint: 0.15,
+  glassBlur: 12,
 };
 
 let store: Promise<Store> | null = null;
@@ -64,8 +70,12 @@ export async function saveDashboardLayout(layout: unknown): Promise<void> {
   await (await getStore()).set("dashboardFree", layout);
 }
 
-/** Apply the dark veil over the wallpaper (CSS variable). */
-export function applyOverlayOpacity(opacity: number): void {
-  const o = Math.min(Math.max(opacity, 0), 0.95);
-  document.documentElement.style.setProperty("--overlay-tint", String(o));
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
+
+/** Apply the appearance settings (CSS variables); partial = live preview. */
+export function applyAppearance(s: Partial<Pick<Settings, "overlayOpacity" | "glassTint" | "glassBlur">>): void {
+  const root = document.documentElement.style;
+  if (s.overlayOpacity !== undefined) root.setProperty("--overlay-tint", String(clamp(s.overlayOpacity, 0, 0.95)));
+  if (s.glassTint !== undefined) root.setProperty("--glass-tint", String(clamp(s.glassTint, 0, 0.8)));
+  if (s.glassBlur !== undefined) root.setProperty("--glass-blur", `${clamp(s.glassBlur, 0, 40)}px`);
 }
