@@ -59,3 +59,31 @@ describe.runIf(process.env.LIVE_OLLAMA === "1")("ollama live", () => {
     expect(r.kind).toBe("none");
   }, 120_000);
 });
+
+describe.runIf(process.env.LIVE_OLLAMA === "1")("ollama live review", () => {
+  it("writes a review with the expected sections", async () => {
+    const { REVIEW_SYSTEM_PROMPT, reviewUserPrompt, summarizeCategories, isoWeek } = await import("../review/week");
+    const sport = cats[0];
+    const entries = [
+      { categoryId: "1", occurredAt: new Date(2026, 10, 23, 8).toISOString(), data: { activity: "course", distance_km: 5, duration_min: 28 } },
+      { categoryId: "1", occurredAt: new Date(2026, 10, 25, 8).toISOString(), data: { activity: "course", distance_km: 6, duration_min: 33 } },
+      { categoryId: "4", occurredAt: new Date(2026, 10, 24, 20).toISOString(), data: { service: "ubereats", amount_eur: 18.5 } },
+    ];
+    const stats = {
+      week: isoWeek(new Date(2026, 10, 25)), categories: summarizeCategories(entries, cats),
+      tasksDone: ["réviser BTS"], tasksOpen: 2, tasksOverdue: [],
+      activity: { totalSeconds: 30_000, days: 5, topApps: [{ app: "Code", seconds: 18_000 }] },
+      streaks: [{ name: sport.name, current: 2 }],
+    };
+    const res = await fetch("http://127.0.0.1:11434/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        model: process.env.OLLAMA_MODEL ?? "qwen2.5:3b", stream: false, options: { temperature: 0.4 },
+        messages: [{ role: "system", content: REVIEW_SYSTEM_PROMPT }, { role: "user", content: reviewUserPrompt(stats) }],
+      }),
+    });
+    const text = ((await res.json()) as any).message.content as string;
+    console.log(text);
+    for (const h of ["## En bref", "## Points forts", "## Pour la semaine prochaine"]) expect(text).toContain(h);
+  }, 180_000);
+});

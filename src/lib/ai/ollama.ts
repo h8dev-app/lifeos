@@ -21,19 +21,23 @@ export function ollamaProvider(model: string) {
       }
     },
 
-    async complete(system, user, schema) {
-      const res = await localFetch(OLLAMA_PORT, "/api/chat", "POST", {
-        model,
-        stream: false,
-        format: schema, // structured output: the reply follows the JSON schema
-        options: { temperature: 0 },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-      });
-      if (res.status !== 200) throw httpError("Ollama", res.status, res.body);
-      return (JSON.parse(res.body) as { message?: { content?: string } }).message?.content ?? "";
-    },
+    complete: (system, user, schema) => chat(system, user, schema),
+    write: (system, user) => chat(system, user, null),
   });
+
+  async function chat(system: string, user: string, schema: object | null): Promise<string> {
+    const res = await localFetch(OLLAMA_PORT, "/api/chat", "POST", {
+      model,
+      stream: false,
+      // With a schema: structured output (the reply follows the JSON schema).
+      ...(schema ? { format: schema } : {}),
+      options: { temperature: schema ? 0 : 0.4 },
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    });
+    if (res.status !== 200) throw httpError("Ollama", res.status, res.body);
+    return (JSON.parse(res.body) as { message?: { content?: string } }).message?.content ?? "";
+  }
 }

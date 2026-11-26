@@ -15,6 +15,8 @@ export interface AiProvider {
   status(): Promise<ProviderStatus>;
   /** Free text → validated entry (or "nothing to log"). */
   parseEntry(text: string, categories: Category[]): Promise<AiEntryResult>;
+  /** Free-form Markdown answer (weekly reviews). */
+  write(system: string, user: string): Promise<string>;
   /** Reserved for later (weekly reviews…). */
   chat?(messages: { role: "user" | "assistant"; content: string }[]): Promise<string>;
 }
@@ -25,6 +27,8 @@ export interface Backend {
   label: string;
   status(): Promise<ProviderStatus>;
   complete(system: string, user: string, schema: object): Promise<string>;
+  /** Same call without a JSON schema: plain text answer. */
+  write(system: string, user: string): Promise<string>;
 }
 
 export function makeProvider(backend: Backend): AiProvider {
@@ -36,6 +40,7 @@ export function makeProvider(backend: Backend): AiProvider {
       const raw = await backend.complete(buildSystemPrompt(categories), text, buildResponseSchema(categories));
       return validateAiEntry(raw, categories);
     },
+    write: (system, user) => backend.write(system, user),
   };
 }
 

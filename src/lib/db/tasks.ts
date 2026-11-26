@@ -59,3 +59,22 @@ export const setTaskDone = (id: string, done: boolean) =>
 export const postponeTask = (id: string) => update(id, "planned_for = $3", [addDays(today(), 1)]);
 
 export const deleteTask = (id: string) => update(id, "deleted_at = $1", []);
+
+/** Titles of tasks done in `[fromIso, toIso)`. */
+export async function listTasksDoneBetween(fromIso: string, toIso: string): Promise<string[]> {
+  const db = await getDb();
+  const rows = await db.select<{ title: string }[]>(
+    `SELECT title FROM tasks WHERE deleted_at IS NULL AND done_at >= $1 AND done_at < $2 ORDER BY done_at`,
+    [fromIso, toIso],
+  );
+  return rows.map((r) => r.title);
+}
+
+/** Open tasks (not done, not deleted). */
+export async function listOpenTasks(): Promise<Task[]> {
+  const db = await getDb();
+  const rows = await db.select<TaskRow[]>(
+    `SELECT id, title, planned_for, due_date, done_at FROM tasks WHERE deleted_at IS NULL AND done_at IS NULL`,
+  );
+  return rows.map(toTask);
+}

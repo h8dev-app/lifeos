@@ -11,6 +11,7 @@
   import Activity from "./views/Activity.svelte";
   import Claude from "./views/Claude.svelte";
   import { GITHUB_POLL_MS } from "./lib/activity/sync";
+  import { autoReviewIfDue, generateReview, weekFromArgs, type ReviewResult } from "./lib/review/generate";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
   import { app, guard, reloadEntries, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
@@ -41,6 +42,7 @@
             case "tache": return handleTask(r.args);
             case "note": return handleNote(r.args);
             case "claude": return handleClaude(r.args);
+            case "bilan": return handleReview(r.args);
           }
           return false;
         case "freetext":
@@ -120,6 +122,43 @@
   }
 
   /** `/note` opens the Notes view; `/note <titre>` creates the note and opens it. */
+  let reviewBusy = false;
+
+  function openReview(r: ReviewResult, prefix: string) {
+    app.openNoteId = r.note.id;
+    app.view = "notes";
+    say(r.ai ? `✓ ${prefix}` : `${prefix} (chiffres seulement, IA indisponible : ${r.reason})`, r.ai ? "ok" : "error");
+  }
+
+  /** `/bilan` (this week) or `/bilan -1` (last week): generate and open the note. */
+  async function handleReview(args: string): Promise<boolean> {
+    const week = weekFromArgs(args);
+    if (!week) { say("Usage : /bilan (cette semaine) ou /bilan -1 (semaine dernière).", "error"); return false; }
+    if (reviewBusy) return false;
+    reviewBusy = true;
+    say(`Bilan de la semaine ${week.number} en cours de rédaction…`);
+    try {
+      openReview(await generateReview(week), `Bilan semaine ${week.number} enregistré dans Notes.`);
+      return true;
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
+  /** From Monday: last week's review, once, without asking. */
+  async function autoReview() {
+    if (!app.settings.weeklyReviewAuto || reviewBusy) return;
+    reviewBusy = true;
+    try {
+      const r = await autoReviewIfDue();
+      if (r) say(r.ai ? `📝 Ton bilan de la semaine dernière est prêt (Notes, Ctrl+3).` : `📝 Bilan de la semaine dernière créé sans texte IA (${r.reason}).`, r.ai ? "ok" : "info");
+    } catch (e) {
+      console.error("auto review", e);
+    } finally {
+      reviewBusy = false;
+    }
+  }
+
   async function handleNote(args: string): Promise<boolean> {
     if (args.trim()) {
       const note = await createNote(args.trim());
@@ -168,17 +207,19 @@
   onMount(() => {
     bar.focus();
     // Settings first (GitHub username), then a first sync, then every 10 min.
-    reloadSettings()
-      .then(runGithubSync)
-      .catch((e) => say(`Réglages illisibles : ${e}`, "error"));
+    const settingsReady = reloadSettings().catch((e) => say(`Réglages illisibles : ${e}`, "error"));
+    settingsReady.then(runGithubSync);
     const githubTimer = setInterval(runGithubSync, GITHUB_POLL_MS);
-    Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
+    const dataReady = Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
+    // Needs settings (provider) and data (categories, streaks).
+    Promise.all([settingsReady, dataReady]).then(autoReview);
     // Rust emits this each time the overlay appears.
     const unlisten = onOverlayShown(() => {
       say("");
       reloadTasks(); // the day may have changed while hidden
+      autoReview(); // a new week may have started while LifeOS kept running
       if (app.view === "claude") document.querySelector<HTMLElement>(".xterm-helper-textarea")?.focus();
       else if (app.view !== "notes") bar.focus();
     });

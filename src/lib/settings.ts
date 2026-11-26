@@ -13,6 +13,8 @@ export interface Settings {
   openaiModel: string;
   /** GitHub username for push tracking; empty = off. */
   githubUser: string;
+  /** Generate last week's review automatically from Monday. */
+  weeklyReviewAuto: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   anthropicModel: "claude-opus-5-5",
   openaiModel: "gpt-5-mini",
   githubUser: "",
+  weeklyReviewAuto: true,
 };
 
 let store: Promise<Store> | null = null;
@@ -30,9 +33,14 @@ const getStore = () =>
 export async function loadSettings(): Promise<Settings> {
   const s = await getStore();
   const out = { ...DEFAULT_SETTINGS };
+  const bag = out as unknown as Record<string, string | boolean>;
   for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
-    const value = await s.get<string>(key);
-    if (typeof value === "string" && (value.trim() || key === "githubUser")) (out as Record<string, string>)[key] = value.trim();
+    const value = await s.get<string | boolean>(key);
+    if (typeof DEFAULT_SETTINGS[key] === "boolean") {
+      if (typeof value === "boolean") bag[key] = value;
+    } else if (typeof value === "string" && (value.trim() || key === "githubUser")) {
+      bag[key] = value.trim();
+    }
   }
   return out;
 }

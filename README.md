@@ -5,6 +5,14 @@ Elle tourne en fond et s'affiche en plein écran par-dessus tout avec un raccour
 
 État : **v1 complète** (jalons 1 à 7) : overlay, raccourci, `--toggle`, SQLite, catégories, commandes slash, tâches, notes Markdown, IA pour le texte libre, activité ActivityWatch + GitHub, panneau Claude Code, tableau de bord avec séries.
 
+## Bilan hebdomadaire
+
+Chaque lundi (au premier affichage de LifeOS), le bilan de la semaine passée est créé dans Notes : `bilan-2026-s48.md`.
+- Les chiffres (entrées par catégorie, totaux de distance/durée/montant, tâches, temps d'ordinateur, séries) sont calculés par LifeOS.
+- L'IA choisie dans les Réglages écrit seulement le texte : en bref, points forts, à améliorer, 3 objectifs en cases à cocher.
+- À la main : `/bilan` (semaine en cours) ou `/bilan -1` (semaine dernière). Relancer remplace la note de la même semaine.
+- Désactivable dans Réglages. Avec Ollama (`qwen2.5:3b`) la rédaction prend 1 à 2 min sur processeur et reste approximative ; un modèle Anthropic écrit mieux.
+
 ## Tableau de bord
 
 Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si la série attend l'entrée du jour), tâches du jour, dernières entrées, temps actif par appli (top 5), barre de saisie en bas.
@@ -20,6 +28,7 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
 | `/tache rendre le dossier @vendredi` | tâche du jour, échéance optionnelle |
 | `/note Réunion BTS` | crée la note et l'ouvre (`/note` seul ouvre la vue Notes) |
+| `/bilan` · `/bilan -1` | bilan de la semaine en cours / dernière, enregistré dans Notes |
 | `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
 
 Types de champs pour `/cat` : `texte`, `distance`, `durée`, `euros`, `nombre`.
@@ -87,7 +96,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.1.0-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.2.0-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).

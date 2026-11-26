@@ -195,9 +195,26 @@ ResizeObserver ─► fit ─► pty_resize         EOF ─► "pty://exit" ─�
   today (shown as pending). Only streaks of 2+ days are displayed.
 - Today's activity summary reuses the ActivityWatch loader (top 5 apps).
 
+## Weekly review
+
+```
+/bilan or Monday auto ─► collect(week): entries, tasks, ActivityWatch day by day, streaks
+                       ─► summarizeCategories / renderStatsMarkdown   (pure, tested)
+                       ─► provider.write(REVIEW_SYSTEM_PROMPT, reviewUserPrompt)  (text only)
+                       ─► upsertNoteFile("bilan-YYYY-sNN.md")  → Notes
+```
+
+- All numbers are computed by code; the AI only writes prose from them. The
+  stats section is appended under the AI text, so the note stays correct even
+  if the model misreads a number.
+- ISO weeks (Monday start, ISO year of the Thursday).
+- Auto mode: on startup and each time the overlay shows, if last week's note
+  does not exist yet. Without AI, the note is still created with the numbers.
+- `AiProvider.write(system, user)` = same backends without JSON schema.
+
 ## Out of scope v1 (architecture ready)
 
 - Supabase sync: UUID text ids, `updated_at`, `deleted_at` on every table;
   SQLite stays the source of truth.
-- Google Calendar / Gmail, AI weekly reviews (`AiProvider.chat` is reserved),
-  screenpipe.
+- Google Calendar / Gmail, screenpipe. `AiProvider.chat` stays reserved for a
+  future conversation mode.

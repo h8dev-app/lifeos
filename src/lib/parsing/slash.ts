@@ -15,7 +15,7 @@
 import type { Category, EntryData, FieldDef, FieldType } from "../types";
 import { isBareNumber, parseDistance, parseDuration, parseMoney, parseNumber } from "./units";
 
-export const BUILTINS = ["tache", "note", "claude", "cat"] as const;
+export const BUILTINS = ["tache", "note", "claude", "cat", "bilan"] as const;
 export type Builtin = (typeof BUILTINS)[number];
 
 export type ParseResult =

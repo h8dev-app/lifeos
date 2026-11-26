@@ -155,3 +155,36 @@ export async function syncNotes(): Promise<void> {
     await db.execute("DELETE FROM notes_fts WHERE note_id = $1", [row.id]);
   }
 }
+
+/**
+ * Write a note with a fixed file name (weekly reviews): created the first
+ * time, overwritten next times. Returns the note.
+ */
+export async function upsertNoteFile(fileName: string, content: string): Promise<NoteMeta> {
+  await ensureDir();
+  const path = `${DIR}/${fileName}`;
+  const db = await getDb();
+  const rows = await db.select<NoteRow[]>("SELECT * FROM notes WHERE path = $1", [path]);
+  const title = titleFromContent(content);
+  const now = nowIso();
+  await writeTextFile(path, content, opts);
+  const id = rows[0]?.id ?? newId();
+  await db.execute(
+    `INSERT INTO notes (id, path, title, content_hash, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $5)
+     ON CONFLICT(path) DO UPDATE SET title = $3, content_hash = $4, updated_at = $5, deleted_at = NULL`,
+    [id, path, title, contentHash(content), now],
+  );
+  await indexNote(id, title, content);
+  return { id, path, title, updatedAt: now };
+}
+
+/** Does a note file with this name exist (and is not deleted)? */
+export async function noteFileExists(fileName: string): Promise<boolean> {
+  const db = await getDb();
+  const rows = await db.select<{ n: number }[]>(
+    "SELECT COUNT(*) AS n FROM notes WHERE path = $1 AND deleted_at IS NULL",
+    [`${DIR}/${fileName}`],
+  );
+  return rows[0]?.n > 0;
+}

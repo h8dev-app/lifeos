@@ -90,7 +90,15 @@
   </label>
   {#if isDev}<p class="hint">Désactivé en mode dev : il enregistrerait le binaire de développement.</p>{/if}
 
-  <h2>IA pour le texte libre</h2>
+  <h2>Bilan hebdomadaire</h2>
+  <label class="check">
+    <input type="checkbox" checked={app.settings.weeklyReviewAuto}
+      onchange={(e) => set("weeklyReviewAuto", e.currentTarget.checked)} />
+    Générer automatiquement le bilan de la semaine passée, à partir du lundi
+  </label>
+  <p class="hint">Note <code>bilan-AAAA-sNN.md</code> dans Notes. Chiffres calculés par LifeOS, texte écrit par l'IA choisie ci-dessous. À la main : <code>/bilan</code> (semaine en cours) ou <code>/bilan -1</code>.</p>
+
+  <h2>IA</h2>
   <div class="providers">
     {#each PROVIDERS as p (p.id)}
       <label class:active={app.settings.aiProvider === p.id}>
