@@ -2,6 +2,8 @@
   import { guard, reloadTasks } from "../lib/app.svelte";
   import { deleteTask, postponeTask, setTaskDone, type Task } from "../lib/db/tasks";
   import { formatDay, today } from "../lib/dates";
+  import { priorityOf } from "../lib/tasks/board";
+  import { app } from "../lib/app.svelte";
 
   // `compact`: dashboard version (no postpone/delete buttons).
   let { tasks, compact = false }: { tasks: Task[]; compact?: boolean } = $props();
@@ -19,7 +21,12 @@
         onchange={(e) => run(() => setTaskDone(t.id, e.currentTarget.checked))}
         aria-label="Faite"
       />
+      <span class="prio" title="Priorité {priorityOf(t.priority).label.toLowerCase()}">{priorityOf(t.priority).dot}</span>
       <span class="title">{t.title}</span>
+      {#if t.categoryId}
+        {@const cat = app.taskCategories.find((c) => c.id === t.categoryId)}
+        {#if cat}<span class="cat" style:color={cat.color}>#{cat.name}</span>{/if}
+      {/if}
       {#if t.dueDate}
         <span class="due" class:late={overdue(t)} title="Échéance">⏰ {formatDay(t.dueDate)}</span>
       {/if}
@@ -38,6 +45,8 @@
     padding: 8px 12px; background: var(--surface); border-radius: 8px;
   }
   input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .prio { font-size: 10px; }
+  .cat { font-size: 12px; white-space: nowrap; }
   .title { flex: 1; }
   .done .title { text-decoration: line-through; color: var(--text-muted); }
   .due { font-size: 13px; color: var(--text-muted); }

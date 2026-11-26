@@ -26,6 +26,12 @@ fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0002_seed.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "task_board",
+            sql: include_str!("../migrations/0003_task_board.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

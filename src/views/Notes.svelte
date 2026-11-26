@@ -5,6 +5,7 @@
   import { app, guard, say } from "../lib/app.svelte";
   import { createFolder, createNote, deleteNote, listFolders, listNotes, moveNote, syncNotes, type NoteMeta } from "../lib/db/notes";
   import { formatWhen } from "../lib/clock";
+  import { onEscape } from "../lib/overlay";
 
   const ALL = "__all__";
 
@@ -16,6 +17,8 @@
   let creating = $state(false);
   let newFolderMode = $state(false);
   let newFolderName = $state("");
+  let selected = $state<Set<string>>(new Set());
+  let confirmBulkDelete = $state(false);
 
   const open = $derived(notes.find((n) => n.id === openId) ?? null);
   const visible = $derived(filter === ALL ? notes : notes.filter((n) => n.folder === filter));
@@ -33,10 +36,54 @@
     }
   }
 
-  onMount(async () => {
-    await guard(syncNotes);
-    await refresh();
+  onMount(() => {
+    guard(syncNotes).then(refresh);
+    // Escape: first clears the selection, then (App) closes the overlay.
+    return onEscape(() => {
+      if (selected.size === 0) return false;
+      clearSelection();
+      return true;
+    });
   });
+
+  // ----- multiple selection
+  const selecting = $derived(selected.size > 0);
+
+  function toggle(id: string) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    selected = next;
+    confirmBulkDelete = false;
+  }
+
+  function clearSelection() {
+    selected = new Set();
+    confirmBulkDelete = false;
+  }
+
+  function cardClick(e: MouseEvent, n: NoteMeta) {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || selecting) toggle(n.id);
+    else openId = n.id;
+  }
+
+  async function bulkMove(folder: string) {
+    const list = notes.filter((n) => selected.has(n.id));
+    let done = 0;
+    for (const n of list) if (await guard(() => moveNote(n, folder))) done++;
+    say(`${done} note(s) déplacée(s) dans « ${folder || "Sans catégorie"} ».`);
+    clearSelection();
+    await refresh();
+  }
+
+  async function bulkDelete() {
+    if (!confirmBulkDelete) { confirmBulkDelete = true; return; }
+    const list = notes.filter((n) => selected.has(n.id));
+    let done = 0;
+    for (const n of list) if (await guard(async () => { await deleteNote(n); return true; })) done++;
+    say(`${done} note(s) mise(s) à la corbeille (notes/.trash).`);
+    clearSelection();
+    await refresh();
+  }
 
   // Search as you type; also re-read when `/note` or `/bilan` asks to open a note.
   $effect(() => { search; app.openNoteId; refresh(); });
@@ -119,6 +166,20 @@
           ondelete={() => remove(open)} />
       {/key}
     {:else}
+      {#if selecting}
+        <div class="selbar" role="toolbar" aria-label="Actions sur la sélection">
+          <strong>{selected.size} sélectionnée{selected.size > 1 ? "s" : ""}</strong>
+          <button onclick={() => (selected = new Set(visible.map((n) => n.id)))}>Tout sélectionner</button>
+          <select aria-label="Déplacer vers" value="__" onchange={(e) => e.currentTarget.value !== "__" && bulkMove(e.currentTarget.value)}>
+            <option value="__" disabled>Déplacer vers…</option>
+            <option value="">Sans catégorie</option>
+            {#each folders as f (f)}<option value={f}>{f}</option>{/each}
+          </select>
+          <button class="danger" onclick={bulkDelete}>{confirmBulkDelete ? "Confirmer" : "🗑 Corbeille"}</button>
+          <span class="grow"></span>
+          <button class="ghost" onclick={clearSelection}>Annuler (Échap)</button>
+        </div>
+      {/if}
       <h2>
         {filter === ALL ? (search ? `Résultats pour « ${search} »` : "Toutes les notes") : filter || "Sans catégorie"}
         <span class="n">{visible.length}</span>
@@ -131,14 +192,21 @@
       {:else}
         <div class="cards">
           {#each visible as n (n.id)}
-            <button class="card" onclick={() => (openId = n.id)}>
-              <span class="t">{n.title}</span>
+            <!-- div, not button: it contains a checkbox (no interactive element inside a button). -->
+            <div class="card" class:selected={selected.has(n.id)} role="button" tabindex="0"
+              onclick={(e) => cardClick(e, n)}
+              onkeydown={(e) => { if (e.key === "Enter") openId = n.id; if (e.key === " ") { e.preventDefault(); toggle(n.id); } }}>
+              <span class="head">
+                <input type="checkbox" class="check" class:visible={selecting} checked={selected.has(n.id)}
+                  onclick={(e) => { e.stopPropagation(); toggle(n.id); }} aria-label="Sélectionner {n.title}" />
+                <span class="t">{n.title}</span>
+              </span>
               <span class="x">{n.excerpt || "Note vide"}</span>
               <span class="meta">
                 {#if filter === ALL}<span class="tag">{n.folder || "Sans catégorie"}</span>{/if}
                 <span>{formatWhen(n.updatedAt)}</span>
               </span>
-            </button>
+            </div>
           {/each}
         </div>
       {/if}
@@ -184,7 +252,25 @@
     padding: 14px; color: var(--text); cursor: pointer; font: inherit;
   }
   .card:hover { border-color: var(--accent); background: var(--surface-strong); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .card { user-select: none; }
+  .card.selected { border-color: var(--accent); background: rgba(122, 162, 255, 0.15); }
+  .head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .check { margin: 0; accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
+  .card:hover .check, .check.visible, .card.selected .check { opacity: 1; }
   .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .selbar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px;
+    background: #161a24; border: 1px solid var(--accent); border-radius: var(--radius);
+  }
+  .selbar button, .selbar select {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .selbar select option { background: #1b2030; }
+  .selbar .danger { color: var(--error); border-color: var(--error); }
+  .selbar .ghost { background: none; border-color: transparent; color: var(--text-muted); }
+  .grow { flex: 1; }
   .x { color: var(--text-muted); font-size: 13px; line-height: 1.4; flex: 1;
     display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--text-muted); font-size: 12px; }

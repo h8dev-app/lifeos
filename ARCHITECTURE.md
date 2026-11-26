@@ -94,6 +94,16 @@ the AI with a preview and confirmation (milestone 4).
 
 ## Tasks
 
+- Kanban (migration `0003_task_board.sql`): `status` todo/doing/done,
+  `priority` 1–3, `category_id` → `task_categories` (free, coloured).
+  `done_at` is set when the status becomes `done` (used by the dashboard and
+  weekly reviews). Sorting in a column: `compareTasks` (`src/lib/tasks/board.ts`, tested).
+- Drag and drop is HTML5; the window has `dragDropEnabled: false`, otherwise
+  Tauri's native file-drop handler swallows the events (Windows).
+- Bulk updates use one `UPDATE … WHERE id IN (…)`.
+- Escape priority: open dialog/editor (stopPropagation) → view handlers
+  registered with `onEscape` (clear selection) → close the overlay.
+
 - `planned_for` (local `YYYY-MM-DD`) = the day the task is shown; "Reporter"
   moves it to tomorrow. Undone tasks planned in the past show in "today".
 - `due_date` = optional deadline, shown red when passed.

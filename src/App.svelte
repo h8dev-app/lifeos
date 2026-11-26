@@ -15,10 +15,11 @@
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
   import { app, guard, reloadEntries, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
-  import { closeOverlay, onOverlayShown } from "./lib/overlay";
+  import { closeOverlay, consumeEscape, onOverlayShown } from "./lib/overlay";
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
-  import { addTask } from "./lib/db/tasks";
+  import { addTask, ensureTaskCategory } from "./lib/db/tasks";
+  import { priorityOf } from "./lib/tasks/board";
   import { createFolder, createNote } from "./lib/db/notes";
   import { parseNoteArgs } from "./lib/notes/markdown";
   import { parseCatArgs, parseInput } from "./lib/parsing/slash";
@@ -116,9 +117,15 @@
   async function handleTask(args: string): Promise<boolean> {
     const parsed = parseTaskArgs(args);
     if ("error" in parsed) { say(parsed.error, "error"); return false; }
-    await addTask(parsed.title, parsed.dueDate);
+    const categoryId = parsed.category ? await ensureTaskCategory(parsed.category) : null;
+    await addTask({ title: parsed.title, dueDate: parsed.dueDate, categoryId, priority: parsed.priority ?? 2 });
     await reloadTasks();
-    say(`✓ Tâche ajoutée${parsed.dueDate ? ` (échéance ${formatDay(parsed.dueDate)})` : ""}.`, "ok");
+    const bits = [
+      parsed.category && `#${parsed.category}`,
+      parsed.priority && priorityOf(parsed.priority).label.toLowerCase(),
+      parsed.dueDate && `échéance ${formatDay(parsed.dueDate)}`,
+    ].filter(Boolean);
+    say(`✓ Tâche ajoutée${bits.length ? ` (${bits.join(", ")})` : ""}.`, "ok");
     return true;
   }
 
@@ -204,7 +211,7 @@
       e.preventDefault();
       // First Escape cancels an AI proposal, the next one closes the overlay.
       if (app.pending) cancelPending();
-      else closeOverlay();
+      else if (e.shiftKey || !consumeEscape()) closeOverlay();
     } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];

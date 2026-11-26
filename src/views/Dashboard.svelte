@@ -7,7 +7,7 @@
   import ActivitySummary from "../components/ActivitySummary.svelte";
   import { app, guard, reloadEntries, say } from "../lib/app.svelte";
   import { deleteEntry } from "../lib/db/entries";
-  import { today } from "../lib/dates";
+  import { startOfDayIso, today } from "../lib/dates";
 
   let now = $state(new Date());
   const timer = setInterval(() => (now = new Date()), 1000);
@@ -15,7 +15,9 @@
 
   // Today's open tasks (carried over ones included), then those done today.
   const todayTasks = $derived(
-    app.tasks.filter((t) => t.doneAt || !t.plannedFor || t.plannedFor <= today(now)),
+    app.tasks
+      .filter((t) => (t.doneAt ? t.doneAt >= startOfDayIso(now) : !t.plannedFor || t.plannedFor <= today(now)))
+      .sort((a, b) => Number(!!a.doneAt) - Number(!!b.doneAt) || a.priority - b.priority),
   );
 
   async function remove(id: string) {

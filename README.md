@@ -26,7 +26,7 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 | `/cuisine pâtes carbo` | plat |
 | `/devoirs maths 45min exercices p.12` | matière, durée, note |
 | `/cat lecture 📖 livre:texte pages:nombre` | crée la catégorie `/lecture` |
-| `/tache rendre le dossier @vendredi` | tâche du jour, échéance optionnelle |
+| `/tache rendre le dossier #Cours !haute @vendredi` | tâche (catégorie, priorité `!haute`/`!moyenne`/`!basse` et échéance optionnelles) |
 | `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
 | `/bilan` · `/bilan -1` | bilan de la semaine en cours / dernière, enregistré dans Notes |
 | `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
@@ -55,7 +55,12 @@ Tout ce qui ne commence pas par `/` part vers l'IA choisie dans les Réglages, p
 L'IA propose une entrée (catégorie, valeurs, heure) : `Entrée` pour l'enregistrer, `Échap` pour l'annuler. Rien n'est enregistré sans confirmation.
 Si l'IA est indisponible, seules les commandes `/…` marchent.
 
-- **Tâches** : cocher, reporter à demain, supprimer. Une tâche non faite reste dans « Aujourd'hui » les jours suivants.
+- **Tâches** : kanban À faire / En cours / Fait.
+  - Glisser une carte d'une colonne à l'autre ; chaque colonne est triée par priorité (🔴 haute, 🟠 moyenne, ⚪ basse) puis échéance. Clic sur la pastille = changer la priorité.
+  - Catégories libres avec couleur (filtre en haut, « ＋ Catégorie », × pour supprimer).
+  - Clic sur une carte = la modifier (titre, priorité, statut, échéance, catégorie, suppression).
+  - « Fait » montre les 7 derniers jours.
+- **Sélection multiple** (tâches et notes) : case à cocher au survol, ou `Ctrl`/`Maj`+clic. Barre d'actions : changer de statut, priorité, catégorie, déplacer, supprimer. `Échap` annule la sélection.
 - **Notes** : fichiers `.md` dans le dossier `notes/` (modifiables avec n'importe quel éditeur), rangés par **catégorie** = sous-dossier (`notes/Cours/…`). Les bilans vont dans `Bilans`.
   - « ＋ Nouvelle note » demande un nom et une catégorie (existante ou nouvelle).
   - Cartes avec aperçu du texte, filtre par catégorie, recherche plein texte.
@@ -100,7 +105,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.2.2-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.3.0-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).

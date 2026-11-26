@@ -1,27 +1,42 @@
 /**
- * `/tache` arguments: the title, plus an optional due date written `@date`
- * anywhere in the text (see `parseDateWord`).
+ * `/tache` arguments, in any order inside the text:
+ *   @date      due date (see `parseDateWord`)
+ *   #Catégorie category (created if needed; `_` = space)
+ *   !priorité  !haute / !moyenne / !basse (or !1 !2 !3, !urgent)
  *
- *   /tache rendre le dossier @vendredi   → { title: "rendre le dossier", dueDate: "2026-11-27" }
+ *   /tache rendre le dossier #Cours !haute @vendredi
  */
 import { parseDateWord } from "../dates";
+import { parsePriorityWord, type Priority } from "../tasks/board";
 
-export function parseTaskArgs(
-  args: string,
-  now: Date = new Date(),
-): { title: string; dueDate: string | null } | { error: string } {
+export interface ParsedTask {
+  title: string;
+  dueDate: string | null;
+  category: string | null;
+  priority: Priority | null;
+}
+
+export function parseTaskArgs(args: string, now: Date = new Date()): ParsedTask | { error: string } {
   let dueDate: string | null = null;
+  let category: string | null = null;
+  let priority: Priority | null = null;
   const words: string[] = [];
   for (const token of args.trim().split(/\s+/).filter(Boolean)) {
     if (token.startsWith("@") && token.length > 1) {
       const date = parseDateWord(token.slice(1), now);
       if (!date) return { error: `Date « ${token} » non comprise (ex. @demain, @vendredi, @28/11).` };
       dueDate = date;
+    } else if (token.startsWith("#") && token.length > 1) {
+      category = token.slice(1).replace(/_/g, " ").trim();
+    } else if (token.startsWith("!") && token.length > 1) {
+      const p = parsePriorityWord(token.slice(1));
+      if (!p) return { error: `Priorité « ${token} » inconnue (!haute, !moyenne, !basse).` };
+      priority = p;
     } else {
       words.push(token);
     }
   }
   const title = words.join(" ");
-  if (!title) return { error: "Usage : /tache <titre> [@échéance]" };
-  return { title, dueDate };
+  if (!title) return { error: "Usage : /tache <titre> [#catégorie] [!haute|!moyenne|!basse] [@échéance]" };
+  return { title, dueDate, category, priority };
 }

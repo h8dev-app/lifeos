@@ -23,3 +23,23 @@ export async function closeOverlay(): Promise<void> {
   await Promise.allSettled([...beforeHide].map((fn) => fn()));
   await hideOverlay();
 }
+
+/**
+ * Escape handlers of the views (e.g. clear a selection). The most recent
+ * handler runs first; if one returns true, Escape is consumed and the
+ * overlay stays open.
+ */
+const escapeHandlers: (() => boolean)[] = [];
+
+export function onEscape(fn: () => boolean): () => void {
+  escapeHandlers.push(fn);
+  return () => {
+    const i = escapeHandlers.lastIndexOf(fn);
+    if (i !== -1) escapeHandlers.splice(i, 1);
+  };
+}
+
+export function consumeEscape(): boolean {
+  for (let i = escapeHandlers.length - 1; i >= 0; i--) if (escapeHandlers[i]()) return true;
+  return false;
+}

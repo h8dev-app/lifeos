@@ -6,7 +6,7 @@ import { listCategories } from "./db/categories";
 import { entryDaysByCategory, listRecentEntries, type RecentEntry } from "./db/entries";
 import { computeStreaks, type Streak } from "./stats/streaks";
 import { today } from "./dates";
-import { listTasks, type Task } from "./db/tasks";
+import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
 import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
@@ -28,6 +28,7 @@ export const app = $state({
   recent: [] as RecentEntry[],
   streaks: [] as Streak[],
   tasks: [] as Task[],
+  taskCategories: [] as TaskCategory[],
   /** Note to open when the Notes view shows (set by `/note <titre>`). */
   openNoteId: null as string | null,
   toast: { message: "", kind: "info" as ToastKind },
@@ -52,7 +53,7 @@ export async function reloadEntries() {
 }
 
 export async function reloadTasks() {
-  app.tasks = await listTasks();
+  [app.tasks, app.taskCategories] = await Promise.all([listTasks(), listTaskCategories()]);
 }
 
 /** Run a DB action and show the error in the toast instead of failing silently. */
