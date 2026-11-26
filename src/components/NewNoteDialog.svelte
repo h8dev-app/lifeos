@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { sanitizeFolderName } from "../lib/notes/markdown";
+  import Select from "./Select.svelte";
 
   // Asks for a name (required) and a category before creating a note.
   let {
@@ -49,12 +50,12 @@
     <label for="nn-name">Nom</label>
     <input id="nn-name" bind:this={input} bind:value={title} placeholder="ex. Révisions réseau" autocomplete="off" />
 
-    <label for="nn-cat">Catégorie</label>
-    <select id="nn-cat" bind:value={choice}>
-      <option value="">Sans catégorie</option>
-      {#each folders as f (f)}<option value={f}>{f}</option>{/each}
-      <option value={NEW}>+ Nouvelle catégorie…</option>
-    </select>
+    <span class="label">Catégorie</span>
+    <Select label="Catégorie" bind:value={choice} options={[
+      { value: "", label: "Sans catégorie" },
+      ...folders.map((f) => ({ value: f, label: f })),
+      { value: NEW, label: "+ Nouvelle catégorie…" },
+    ]} />
     {#if choice === NEW}
       <!-- svelte-ignore a11y_autofocus -->
       <input bind:value={newFolder} placeholder="Nom de la catégorie (ex. Cours)" aria-label="Nouvelle catégorie" autofocus />
@@ -81,12 +82,14 @@
   }
   form { display: flex; flex-direction: column; gap: 8px; }
   h2 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
-  label { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
-  input, select {
+  label, .label { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  form :global(.select) { display: flex; }
+  form :global(.trigger) { padding: 9px 11px; }
+  input {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 9px 11px; color: var(--text); font: inherit; outline: none;
   }
-  input:focus, select:focus { border-color: var(--accent); }
+  input:focus { border-color: var(--accent); }
   .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
   button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);

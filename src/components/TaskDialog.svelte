@@ -3,6 +3,7 @@
   import { app } from "../lib/app.svelte";
   import type { Task } from "../lib/db/tasks";
   import { PRIORITIES, STATUSES, type Priority, type TaskStatus } from "../lib/tasks/board";
+  import Select from "./Select.svelte";
 
   // Create or edit a task. `task` null = creation.
   export interface TaskForm {
@@ -80,26 +81,25 @@
       </div>
 
       <div class="row">
-        <label>
+        <div class="field">
           <span class="label">Statut</span>
-          <select bind:value={status}>
-            {#each STATUSES as s (s.id)}<option value={s.id}>{s.label}</option>{/each}
-          </select>
-        </label>
+          <Select label="Statut" value={status} onchange={(v) => (status = v as TaskStatus)}
+            options={STATUSES.map((s) => ({ value: s.id, label: s.label }))} />
+        </div>
         <label>
           <span class="label">Échéance</span>
           <input type="date" bind:value={dueDate} />
         </label>
       </div>
 
-      <label>
+      <div class="field">
         <span class="label">Catégorie</span>
-        <select bind:value={category}>
-          <option value="">Sans catégorie</option>
-          {#each app.taskCategories as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
-          <option value={NEW}>+ Nouvelle catégorie…</option>
-        </select>
-      </label>
+        <Select label="Catégorie" bind:value={category} options={[
+          { value: "", label: "Sans catégorie" },
+          ...app.taskCategories.map((c) => ({ value: c.id, label: c.name, color: c.color })),
+          { value: NEW, label: "+ Nouvelle catégorie…" },
+        ]} />
+      </div>
       {#if category === NEW}
         <!-- svelte-ignore a11y_autofocus -->
         <input bind:value={newCategory} placeholder="Nom (ex. Cours)" aria-label="Nouvelle catégorie" autofocus />
@@ -133,14 +133,16 @@
   form { display: flex; flex-direction: column; gap: 8px; }
   h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; }
   .label { display: block; color: var(--text-muted); font-size: 13px; margin: 4px 0 4px; }
-  label { display: flex; flex-direction: column; flex: 1; }
+  label, .field { display: flex; flex-direction: column; flex: 1; }
+  .field :global(.select) { display: flex; }
+  .field :global(.trigger) { padding: 9px 11px; }
   .row { display: flex; gap: 10px; }
-  input, select {
+  input {
     background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 9px 11px; color: var(--text); font: inherit; outline: none; color-scheme: dark;
   }
   .name { font-size: 16px; }
-  input:focus, select:focus { border-color: var(--accent); }
+  input:focus { border-color: var(--accent); }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .seg button { flex: 1; border: none; border-radius: 0; background: transparent; color: var(--text-muted); padding: 7px; }
   .seg button.on { background: var(--surface-strong); color: var(--text); }

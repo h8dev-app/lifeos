@@ -105,7 +105,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.3.1-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.3.2-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).

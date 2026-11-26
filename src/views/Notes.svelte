@@ -6,6 +6,7 @@
   import { createFolder, createNote, deleteNote, listFolders, listNotes, moveNote, syncNotes, type NoteMeta } from "../lib/db/notes";
   import { formatWhen } from "../lib/clock";
   import { onEscape } from "../lib/overlay";
+  import Select from "../components/Select.svelte";
 
   const ALL = "__all__";
 
@@ -170,11 +171,10 @@
         <div class="selbar" role="toolbar" aria-label="Actions sur la sélection">
           <strong>{selected.size} sélectionnée{selected.size > 1 ? "s" : ""}</strong>
           <button onclick={() => (selected = new Set(visible.map((n) => n.id)))}>Tout sélectionner</button>
-          <select aria-label="Déplacer vers" value="__" onchange={(e) => e.currentTarget.value !== "__" && bulkMove(e.currentTarget.value)}>
-            <option value="__" disabled>Déplacer vers…</option>
-            <option value="">Sans catégorie</option>
-            {#each folders as f (f)}<option value={f}>{f}</option>{/each}
-          </select>
+          <Select label="Déplacer vers" mode="action" placeholder="Déplacer vers…" onchange={bulkMove} options={[
+            { value: "", label: "Sans catégorie" },
+            ...folders.map((f) => ({ value: f, label: `📁 ${f}` })),
+          ]} />
           <button class="danger" onclick={bulkDelete}>{confirmBulkDelete ? "Confirmer" : "🗑 Corbeille"}</button>
           <span class="grow"></span>
           <button class="ghost" onclick={clearSelection}>Annuler (Échap)</button>
@@ -263,7 +263,8 @@
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 14px;
     background: #161a24; border: 1px solid var(--accent); border-radius: var(--radius);
   }
-  .selbar button, .selbar select {
+  .selbar :global(.trigger) { font-size: 13px; padding: 5px 10px; }
+  .selbar button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
   }

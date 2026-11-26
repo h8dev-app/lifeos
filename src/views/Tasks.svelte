@@ -9,6 +9,7 @@
   } from "../lib/db/tasks";
   import { groupByStatus, nextPriority, PRIORITIES, STATUSES, type Priority, type TaskStatus } from "../lib/tasks/board";
   import { onEscape } from "../lib/overlay";
+  import Select from "../components/Select.svelte";
 
   const ALL = "__all__";
   const NONE = "__none__";
@@ -214,15 +215,13 @@
       {#each STATUSES as s (s.id)}
         <button onclick={() => bulkStatus(s.id)}>→ {s.label}</button>
       {/each}
-      <select aria-label="Priorité" value="" onchange={(e) => e.currentTarget.value && bulkPriority(Number(e.currentTarget.value) as Priority)}>
-        <option value="" disabled>Priorité…</option>
-        {#each PRIORITIES as p (p.id)}<option value={p.id}>{p.dot} {p.label}</option>{/each}
-      </select>
-      <select aria-label="Catégorie" value="" onchange={(e) => e.currentTarget.value && bulkCategory(e.currentTarget.value)}>
-        <option value="" disabled>Catégorie…</option>
-        {#each app.taskCategories as c (c.id)}<option value={c.id}>{c.name}</option>{/each}
-        <option value={NONE}>Sans catégorie</option>
-      </select>
+      <Select up label="Priorité" mode="action" placeholder="Priorité…"
+        onchange={(v) => bulkPriority(Number(v) as Priority)}
+        options={PRIORITIES.map((p) => ({ value: String(p.id), label: `${p.dot} ${p.label}` }))} />
+      <Select up label="Catégorie" mode="action" placeholder="Catégorie…" onchange={bulkCategory} options={[
+        ...app.taskCategories.map((c) => ({ value: c.id, label: c.name, color: c.color })),
+        { value: NONE, label: "Sans catégorie" },
+      ]} />
       <button class="danger" onclick={bulkDelete}>{confirmBulkDelete ? "Confirmer la suppression" : "🗑 Supprimer"}</button>
       <span class="grow"></span>
       <button class="ghost" onclick={clearSelection}>Annuler (Échap)</button>
@@ -285,7 +284,8 @@
     background: #161a24; border: 1px solid var(--accent); border-radius: var(--radius);
   }
   .selbar .sep { width: 1px; height: 20px; background: var(--border); }
-  .selbar button, .selbar select {
+  .selbar :global(.trigger) { font-size: 13px; padding: 5px 10px; }
+  .selbar button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
   }

@@ -7,6 +7,7 @@
   import { readNote, saveNote, type NoteMeta } from "../lib/db/notes";
   import { onBeforeHide } from "../lib/overlay";
   import { formatWhen } from "../lib/clock";
+  import Select from "./Select.svelte";
 
   // GitHub-flavoured Markdown; a single line break stays a line break (like a notepad).
   marked.use({ gfm: true, breaks: true });
@@ -115,10 +116,10 @@
       <span class="state">{saving ? "Enregistrement…" : `Modifiée ${formatWhen(note.updatedAt)}`}</span>
     </div>
     <div class="tools">
-      <select aria-label="Catégorie" value={note.folder} onchange={(e) => move(e.currentTarget.value)}>
-        <option value="">Sans catégorie</option>
-        {#each folders as f (f)}<option value={f}>{f}</option>{/each}
-      </select>
+      <Select label="Catégorie" value={note.folder} onchange={move} options={[
+        { value: "", label: "Sans catégorie" },
+        ...folders.map((f) => ({ value: f, label: `📁 ${f}` })),
+      ]} />
       <div class="seg" role="group" aria-label="Mode">
         <button class:on={!preview} onclick={() => preview && togglePreview()}>Écrire</button>
         <button class:on={preview} onclick={() => !preview && togglePreview()} title="Ctrl+E">Aperçu</button>
@@ -155,11 +156,12 @@
   .title { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .state { color: var(--text-muted); font-size: 12px; margin-left: 8px; white-space: nowrap; }
   .tools { display: flex; align-items: center; gap: 6px; }
-  select, button {
+  button {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     border-radius: 8px; padding: 5px 10px; cursor: pointer; font: inherit; font-size: 13px;
   }
-  button:hover, select:hover { border-color: var(--accent); }
+  button:hover { border-color: var(--accent); }
+  .tools :global(.trigger) { font-size: 13px; padding: 5px 10px; }
   .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   .seg button { border: none; border-radius: 0; background: transparent; color: var(--text-muted); }
   .seg button.on { background: var(--surface-strong); color: var(--text); }
