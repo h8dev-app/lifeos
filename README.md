@@ -28,6 +28,8 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 
 ## Saisie rapide
 
+Tape `/` dans la barre : la liste des commandes s'affiche (↑ ↓, `Tab` ou `Entrée` pour compléter). Une fois la commande choisie, sa syntaxe et ses paramètres s'affichent, avec des suggestions pour `#catégorie`, `@date` et `!priorité`. `/help` (ou le bouton `?`) ouvre l'aide complète, `/help tache` le détail d'une commande. Barre vide + ↑ ↓ : saisies précédentes.
+
 | Commande | Enregistre |
 |---|---|
 | `/sport course 5km 28min` | activité, distance, durée (`1h20`, `500m` acceptés) |
@@ -39,6 +41,7 @@ Heure et date, séries en cours (« 🔥 3 jours de sport », en pointillés si 
 | `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
 | `/rdv Dentiste @demain 14h30 *Cabinet_Dupont` | rendez-vous (heure ou plage `9h-10h30`, lieu `*…` optionnel) |
 | `/memo payer le loyer @vendredi` | pense-bête sur la journée (ou à une heure : `/memo appeler maman 18h`) |
+| `/help` · `/help rdv` | aide des commandes et raccourcis |
 | `/bilan` · `/bilan -1` | bilan de la semaine en cours / dernière, enregistré dans Notes |
 | `/claude ~/projets/lifeos` | ouvre le panneau Claude Code dans ce dossier (`~/projets` par défaut) |
 
@@ -116,7 +119,7 @@ npx tauri build --bundles rpm           # Fedora seulement
 Installation sur Fedora :
 
 ```sh
-sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.4.0-1.x86_64.rpm
+sudo dnf install ./src-tauri/target/release/bundle/rpm/LifeOS-0.4.1-1.x86_64.rpm
 ```
 
 Puis lance « LifeOS » une fois depuis le menu des applications : le démarrage automatique s'active (désactivable dans Réglages).

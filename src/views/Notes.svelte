@@ -30,6 +30,7 @@
     const [list, dirs] = await Promise.all([guard(() => listNotes(search)), guard(listFolders)]);
     notes = list ?? [];
     folders = dirs ?? [];
+    app.noteFolders = folders;
     if (app.openNoteId) {
       const target = notes.find((n) => n.id === app.openNoteId);
       if (target) { openId = target.id; filter = ALL; }

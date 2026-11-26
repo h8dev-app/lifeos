@@ -80,6 +80,16 @@ tasks (…), notes (…) + notes_fts (FTS5)
 - Migrations run automatically when the frontend opens the DB.
   Never edit a released migration: add `0003_….sql` and list it in `db.rs`.
 
+## Command catalogue and autocompletion
+
+- `src/lib/commands/registry.ts` (pure, tested): built-in commands + one per
+  habit category (syntax built from its fields), matching (prefix, accents
+  ignored, aliases), input context (command name vs parameter), suggestions for
+  `@date`, `#catégorie` (task categories, or note folders for /note), `!priorité`.
+- `CommandBar.svelte` shows the list / parameters above the bar; `HelpDialog`
+  renders the same catalogue. Adding a built-in = parser case in App + an entry
+  in `BUILTIN_COMMANDS` (+ `BUILTINS` in slash.ts).
+
 ## Command bar parsing
 
 `parseInput()` in `src/lib/parsing/slash.ts`, driven by `fields_schema`:

@@ -37,6 +37,10 @@ export const app = $state({
   aiBusy: false,
   /** Bumped when agenda items change, so views reload. */
   agendaVersion: 0,
+  /** Note categories (folders), for #autocompletion. */
+  noteFolders: [] as string[],
+  /** /help dialog: null = closed, "" = all commands, "tache" = that command. */
+  help: null as string | null,
   /** Last GitHub sync result, shown in Settings and Activity. */
   github: null as GithubSyncState,
   /** Claude panel: `session` changes to start a new terminal. */
@@ -83,4 +87,9 @@ export async function runGithubSync(): Promise<void> {
   } catch (e) {
     app.github = { at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export async function reloadNoteFolders() {
+  const { listFolders } = await import("./db/notes");
+  app.noteFolders = await listFolders();
 }

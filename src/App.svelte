@@ -11,6 +11,8 @@
   import Activity from "./views/Activity.svelte";
   import Claude from "./views/Claude.svelte";
   import Agenda from "./views/Agenda.svelte";
+  import HelpDialog from "./components/HelpDialog.svelte";
+  import { allCommands } from "./lib/commands/registry";
   import { checkReminders, REMINDER_INTERVAL_MS } from "./lib/agenda/reminders";
   import { atMinutes, defaultReminder, formatMinutes, parseEventArgs, type EventKind } from "./lib/agenda/agenda";
   import { createEvent } from "./lib/db/events";
@@ -18,7 +20,7 @@
   import { autoReviewIfDue, generateReview, weekFromArgs, type ReviewResult } from "./lib/review/generate";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
-  import { app, guard, reloadEntries, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
+  import { app, guard, reloadEntries, reloadNoteFolders, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
   import { closeOverlay, consumeEscape, onOverlayShown } from "./lib/overlay";
   import { createCategory } from "./lib/db/categories";
   import { addEntry } from "./lib/db/entries";
@@ -32,6 +34,8 @@
   import { formatDay } from "./lib/dates";
 
   let bar: CommandBar;
+  const commands = $derived(allCommands(app.categories));
+  const tokenData = $derived({ taskCategories: app.taskCategories.map((c) => c.name), noteFolders: app.noteFolders });
 
   async function handle(text: string): Promise<boolean> {
     const r = parseInput(text, app.categories);
@@ -51,6 +55,10 @@
             case "bilan": return handleReview(r.args);
             case "rdv": return handleEvent(r.args, "event");
             case "memo": return handleEvent(r.args, "memo");
+            case "help":
+            case "aide":
+              app.help = r.args.trim().replace(/^\//, "");
+              return true;
           }
           return false;
         case "freetext":
@@ -250,6 +258,7 @@
     const remindTick = () => checkReminders().catch((e) => console.error("reminders", e));
     remindTick();
     const reminderTimer = setInterval(remindTick, REMINDER_INTERVAL_MS);
+    reloadNoteFolders().catch(() => {});
     const dataReady = Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
@@ -273,6 +282,12 @@
 
 <svelte:window onkeydown={onKeydown} />
 
+{#if app.help !== null}
+  <HelpDialog {commands} focus={app.help}
+    onpick={(text) => { app.help = null; bar.fill(text); }}
+    onclose={() => { app.help = null; bar.focus(); }} />
+{/if}
+
 <main>
   <Nav />
   <div class="content">
@@ -292,11 +307,11 @@
       <EntryPreview entry={app.pending} onconfirm={confirmPending} oncancel={cancelPending} />
     {/if}
     <Toast message={app.toast.message} kind={app.toast.kind} />
-    <CommandBar bind:this={bar} onsubmit={handle} />
+    <CommandBar bind:this={bar} onsubmit={handle} {commands} {tokenData} onhelp={() => (app.help = "")} />
     {#if app.view === "dashboard"}
       <CategoryChips categories={app.categories} onpick={(cmd) => bar.fill(cmd)} />
     {/if}
-    <p class="hint">Échap pour fermer · Ctrl+1…7 pour changer de vue</p>
+    <p class="hint">/ commandes · /help aide · Échap fermer · Ctrl+1…7 vues</p>
   </footer>
 </main>
 
