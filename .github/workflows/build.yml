@@ -4,6 +4,11 @@ on:
   push:
   pull_request:
 
+# A new push cancels the build still running for the same branch.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     strategy:
@@ -16,11 +21,14 @@ jobs:
           - os: ubuntu-24.04
             bundles: rpm,deb
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
       - name: Linux system dependencies
         if: runner.os == 'Linux'
+        # An apt mirror once hung for over an hour: fail fast instead.
+        timeout-minutes: 10
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
