@@ -10,13 +10,14 @@
     entries,
     categories,
     ondelete,
-  }: { entries: RecentEntry[]; categories: Category[]; ondelete: (id: string) => void } = $props();
+    bare = false,
+  }: { entries: RecentEntry[]; categories: Category[]; ondelete: (id: string) => void; bare?: boolean } = $props();
 
   const byId = $derived(new Map(categories.map((c) => [c.id, c])));
 </script>
 
 <section>
-  <h2>Dernières entrées</h2>
+  {#if !bare}<h2>Dernières entrées</h2>{/if}
   {#if entries.length === 0}
     <p class="empty">Aucune entrée. Essaie <code>/sport course 5km 28min</code>.</p>
   {:else}

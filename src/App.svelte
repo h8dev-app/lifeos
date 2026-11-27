@@ -23,7 +23,7 @@
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
   import {
-    app, guard, reloadEntries, reloadNoteFolders, reloadProjects, reloadSettings, reloadTasks, restoreScreenWidgets, runGithubSync, say,
+    app, guard, loadBlocks, reloadEntries, reloadNoteFolders, reloadProjects, reloadSettings, reloadTasks, restoreScreenWidgets, runGithubSync, say,
     type View,
   } from "./lib/app.svelte";
   import { createProject } from "./lib/db/projects";
@@ -328,6 +328,7 @@
       else if (app.view !== "notes") bar.focus();
     });
     const animations = setupOverlayAnimation();
+    loadBlocks().catch((e) => console.error("home blocks", e));
     restoreScreenWidgets().catch((e) => console.error("widgets", e));
     // A screen widget asked to open LifeOS on its view.
     const unView = listen<View>("overlay://view", (e) => (app.view = e.payload));

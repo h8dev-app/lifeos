@@ -24,7 +24,7 @@
   import { priorityOf, STATUSES } from "../lib/tasks/board";
   import { onEscape } from "../lib/overlay";
   import {
-    nextMilestone, overdueCount, progressOf, projectTime, PROJECT_STATUSES, sortMilestones, statusLabel,
+    nextMilestone, overdueCount, parseRepo, progressOf, projectTime, PROJECT_STATUSES, sortMilestones, statusLabel,
     type Project, type ProjectStatus,
   } from "../lib/projects/projects";
 
@@ -112,6 +112,21 @@
   let newMilestone = $state("");
   let newMilestoneDate = $state("");
   let newNote = $state("");
+  let repoInput = $state("");
+  let editingRepo = $state(false);
+  const repoParsed = $derived(parseRepo(repoInput));
+
+  /** Link (or change) the GitHub repository from the project page. */
+  async function linkRepo(e: SubmitEvent) {
+    e.preventDefault();
+    if (!open || !repoParsed) return;
+    const p = { ...open, repo: repoParsed };
+    repoInput = "";
+    editingRepo = false;
+    await run(() => updateProject(p.id, p));
+    await guard(() => loadDetail(p));
+    say(`Dépôt ${p.repo} lié au projet.`, "ok");
+  }
 
   async function loadDetail(p: Project) {
     const [allNotes, evs] = await Promise.all([listNotes(), listProjectEvents(p.id, today())]);
@@ -413,9 +428,26 @@
         </div>
 
         <div class="panel glass">
-          <div class="ph"><h3>GitHub</h3>{#if open.repo}<span class="muted small">{open.repo}</span>{/if}</div>
-          {#if !open.repo}
-            <p class="muted small">Lie un dépôt au projet (Modifier) pour voir ses derniers commits.</p>
+          <div class="ph">
+            <h3>GitHub</h3>
+            {#if open.repo && !editingRepo}
+              <span class="repo">
+                <button class="tt muted small" onclick={() => openUrl(`https://github.com/${open.repo}`)} title="Ouvrir sur GitHub">{open.repo}</button>
+                <button class="icon-btn" onclick={() => { editingRepo = true; repoInput = open.repo ?? ""; }} title="Changer de dépôt" aria-label="Changer de dépôt">
+                  <Icon name="settings" size={13} />
+                </button>
+              </span>
+            {/if}
+          </div>
+          {#if !open.repo || editingRepo}
+            <form class="inline" onsubmit={linkRepo}>
+              <!-- svelte-ignore a11y_autofocus -->
+              <input bind:value={repoInput} placeholder="owner/nom ou lien github.com" aria-label="Dépôt GitHub" spellcheck="false" autofocus={editingRepo} />
+              <button type="submit" disabled={!repoParsed}>Lier</button>
+              {#if editingRepo}<button type="button" onclick={() => (editingRepo = false)}>Annuler</button>{/if}
+            </form>
+            {#if repoInput.trim() && !repoParsed}<p class="err small">Format : owner/nom, ou le lien de la page GitHub du dépôt.</p>{/if}
+            {#if !open.repo}<p class="muted small">Ex. h8dev-app/lifeos. Les derniers commits s'afficheront ici.</p>{/if}
           {:else if commits === null}
             <p class="muted small">Chargement…</p>
           {:else if "error" in commits}
@@ -540,6 +572,8 @@
   .agenda li, .notes li, .commits li { padding: 4px 2px; color: var(--text-muted); }
   .agenda li .tt-s, .commits .tt-s { color: var(--text); }
   .inline { display: flex; gap: 6px; margin-top: 8px; }
+  .repo { display: flex; align-items: center; gap: 2px; min-width: 0; }
+  .repo .tt { flex: 0 1 auto; }
   .inline input {
     flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
     padding: 6px 10px; color: var(--text); font: inherit; font-size: 13px; outline: none; color-scheme: inherit;

@@ -91,3 +91,11 @@ export async function loadScreenWidgets(): Promise<string[]> {
 export async function saveScreenWidgets(kinds: string[]): Promise<void> {
   await (await getStore()).set("screenWidgets", kinds);
 }
+
+/**
+ * Re-read settings.json from disk. Needed in a screen widget process: its
+ * store keeps its own copy, and only the main process writes the file.
+ */
+export async function reloadStoreFromDisk(): Promise<void> {
+  await (await getStore()).reload();
+}

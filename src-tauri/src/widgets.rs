@@ -29,22 +29,14 @@ const CLOSED_BY_USER: i32 = 0;
 /// Exit code when stdin ends (unpinned, or the main process quit).
 const CLOSED_BY_MAIN: i32 = 3;
 
-pub const KINDS: [&str; 6] = ["clock", "streaks", "agenda", "tasks", "recent", "activity"];
-
+/// A widget shows one home block, named by its id (`clock`, `b-k3x9…`):
+/// lowercase letters, digits and dashes only (it goes in a window label).
 pub fn is_kind(kind: &str) -> bool {
-    KINDS.contains(&kind)
+    !kind.is_empty() && kind.len() <= 48 && kind.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 
-/// Default size (logical pixels) of a widget window.
-pub fn default_size(kind: &str) -> (f64, f64) {
-    match kind {
-        "clock" => (260.0, 140.0),
-        "streaks" => (360.0, 150.0),
-        "activity" => (330.0, 300.0),
-        "recent" => (380.0, 300.0),
-        _ => (330.0, 380.0),
-    }
-}
+/// Size (logical pixels) of the window until the page sets the block's own.
+pub const DEFAULT_SIZE: (f64, f64) = (330.0, 380.0);
 
 /// `--widget <kind>` in the command line, if valid.
 pub fn widget_arg(args: &[String]) -> Option<String> {
@@ -80,7 +72,7 @@ pub fn broadcast(app: &AppHandle, line: &str) {
 #[tauri::command]
 pub fn widget_open(app: AppHandle, state: tauri::State<Widgets>, kind: String) -> Result<(), String> {
     if !is_kind(&kind) {
-        return Err(format!("widget inconnu : {kind}"));
+        return Err(format!("bloc invalide : {kind}"));
     }
     let mut running = state.0.lock().unwrap();
     if running.contains_key(&kind) {
@@ -180,7 +172,7 @@ pub fn widget_open_app(view: String) -> Result<(), String> {
 /// Build the widget window and listen to the main process.
 pub fn setup_widget(app: &tauri::App, kind: &str) -> tauri::Result<()> {
     OVERLAY_VISIBLE.store(std::env::args().any(|a| a == BEHIND_FLAG), Ordering::Relaxed);
-    let (w, h) = default_size(kind);
+    let (w, h) = DEFAULT_SIZE;
     WebviewWindowBuilder::new(app, format!("widget-{kind}"), WebviewUrl::App("index.html".into()))
         .title(format!("LifeOS · {kind}"))
         .inner_size(w, h)
@@ -224,7 +216,9 @@ mod tests {
     #[test]
     fn reads_widget_and_open_flags() {
         assert_eq!(widget_arg(&args(&["lifeos", "--widget", "agenda"])), Some("agenda".into()));
-        assert_eq!(widget_arg(&args(&["lifeos", "--widget", "nope"])), None);
+        assert_eq!(widget_arg(&args(&["lifeos", "--widget", "b-k3x9a1"])), Some("b-k3x9a1".into()));
+        assert_eq!(widget_arg(&args(&["lifeos", "--widget", "../etc"])), None);
+        assert_eq!(widget_arg(&args(&["lifeos", "--widget", "Agenda"])), None);
         assert_eq!(widget_arg(&args(&["lifeos", "--widget"])), None);
         assert_eq!(open_arg(&args(&["lifeos", "--open", "tasks"])), Some("tasks".into()));
         assert_eq!(open_arg(&args(&["lifeos", "--open", "rm -rf"])), None);

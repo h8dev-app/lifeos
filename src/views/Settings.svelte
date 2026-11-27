@@ -2,7 +2,7 @@
   import Icon from "../components/Icon.svelte";
   import { onMount } from "svelte";
   import { app, guard, reloadSettings, runGithubSync, say, toggleScreenWidget } from "../lib/app.svelte";
-  import { WIDGET_IDS, WIDGETS } from "../lib/dashboard/layout";
+  import { blockTitle } from "../lib/dashboard/layout";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
   import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
@@ -200,10 +200,10 @@
   <h2>Widgets d'écran</h2>
   <p class="hint">Un bloc de l'accueil en petite fenêtre, toujours au premier plan, qui reste affiché quand LifeOS est masqué (ex. l'agenda en haut à gauche pendant une vidéo). Glisse-le par son titre, redimensionne-le par le coin ; sa place est gardée. Aussi depuis l'accueil : bouton <Icon name="picture-in-picture-2" size={13} /> d'un bloc.</p>
   <div class="widgets">
-    {#each WIDGET_IDS as id (id)}
+    {#each app.blocks as b (b.id)}
       <label class="check">
-        <input type="checkbox" checked={app.screenWidgets.includes(id)} onchange={() => toggleScreenWidget(id)} />
-        {WIDGETS[id].label}
+        <input type="checkbox" checked={app.screenWidgets.includes(b.id)} onchange={() => toggleScreenWidget(b.id)} />
+        {blockTitle(b)}
       </label>
     {/each}
   </div>

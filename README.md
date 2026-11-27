@@ -234,3 +234,7 @@ Sous GNOME Wayland, chaque widget tourne dans son propre processus via XWayland 
 ## Projets
 
 Onglet Projets (Ctrl+3) : une carte par projet (avancement, jalon suivant, tâches en retard, temps passé sur 7 jours). La fiche d'un projet regroupe ses jalons, ses tâches, ses rendez-vous, ses notes (un dossier de Notes par projet), le temps passé (fenêtres ActivityWatch dont le titre contient un mot-clé du projet), les derniers commits de son dépôt GitHub, et un bouton qui ouvre Claude dans son dossier.
+
+## Accueil personnalisable
+
+Bouton « Ajouter un bloc » sur l'accueil : horloge, agenda (jour, 3 jours, semaine), tâches filtrées (du jour, toutes, en retard ; par projet ou catégorie), projet, projets en cours, notes récentes (par dossier), note épinglée, post-it, séries et journal des habitudes, temps d'écran. Plusieurs blocs du même type sont possibles. Le bouton réglages d'un bloc permet de le renommer et de choisir son contenu ; « Disposer » pour le déplacer et le redimensionner. Chaque bloc peut aussi être épinglé sur l'écran.

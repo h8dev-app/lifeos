@@ -275,3 +275,13 @@ export async function noteFileExists(fileName: string, folder = REVIEW_FOLDER): 
   );
   return rows[0]?.n > 0;
 }
+
+/** Full text of a note from the search index (no file access: screen widgets). */
+export async function readNoteBody(id: string): Promise<{ title: string; body: string } | null> {
+  const db = await getDb();
+  const rows = await db.select<{ title: string | null; body: string | null }[]>(
+    `SELECT n.title, f.body FROM notes n LEFT JOIN notes_fts f ON f.note_id = n.id WHERE n.id = $1 AND n.deleted_at IS NULL`,
+    [id],
+  );
+  return rows[0] ? { title: rows[0].title ?? "Sans titre", body: rows[0].body ?? "" } : null;
+}

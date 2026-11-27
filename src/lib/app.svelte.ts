@@ -9,7 +9,10 @@ import { today } from "./dates";
 import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
-import { DEFAULT_SETTINGS, loadScreenWidgets, loadSettings, saveScreenWidgets, type Settings } from "./settings";
+import {
+  DEFAULT_SETTINGS, loadDashboardLayout, loadScreenWidgets, loadSettings, saveDashboardLayout, saveScreenWidgets, type Settings,
+} from "./settings";
+import { defaultLayout, normalizeLayout, type Block } from "./dashboard/layout";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { applyAppearance } from "./theme";
@@ -50,6 +53,8 @@ export const app = $state({
   github: null as GithubSyncState,
   /** Claude panel: `session` changes to start a new terminal; `request` = start in that folder. */
   claude: { cwd: null as string | null, running: false, session: 0, opened: false, request: null as string | null },
+  /** Home screen blocks (also read by Settings and the screen widgets). */
+  blocks: defaultLayout() as Block[],
   projects: [] as Project[],
   milestones: [] as Milestone[],
   /** Project to open when the Projects view shows (set by /projet). */
@@ -59,6 +64,21 @@ export const app = $state({
   /** Widgets pinned on the screen (see src-tauri/src/widgets.rs). */
   screenWidgets: [] as string[],
 });
+
+// ------------------------------------------------------------ home blocks
+
+export async function loadBlocks(): Promise<void> {
+  const raw = await loadDashboardLayout();
+  if (raw !== undefined && raw !== null) app.blocks = normalizeLayout(raw);
+}
+
+/** Save the home blocks; a deleted block that was pinned on the screen is unpinned. */
+export async function saveBlocks(next: Block[]): Promise<void> {
+  const gone = app.blocks.filter((b) => !next.some((n) => n.id === b.id)).map((b) => b.id);
+  app.blocks = next;
+  await guard(() => saveDashboardLayout($state.snapshot(next)));
+  for (const id of gone) if (app.screenWidgets.includes(id)) await toggleScreenWidget(id);
+}
 
 // ------------------------------------------------------------ screen widgets
 

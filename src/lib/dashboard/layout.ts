@@ -1,62 +1,136 @@
 /**
- * Home screen layout: free placement. Each widget is a rectangle in
- * fractions of the home area (0..1), so the layout follows the window size.
- * Overlap is allowed; array order is the stacking order (last = on top).
- * Pure logic, saved as JSON in the settings store.
+ * Home screen: blocks placed freely. Each block has a type (what it shows),
+ * an optional title chosen by the user, and options (filters, project,
+ * note…). Several blocks of the same type are allowed.
+ * Position/size are fractions of the home area (0..1), so the layout
+ * follows the window size. Overlap is allowed; array order is the stacking
+ * order (last = on top). Pure logic, saved as JSON in the settings store.
  */
+import type { IconName } from "../ui/iconNames";
 
-export type WidgetId = "clock" | "streaks" | "agenda" | "tasks" | "recent" | "activity";
+export type BlockType =
+  | "clock" | "agenda" | "tasks" | "project" | "projects" | "notes" | "note" | "memo"
+  | "streaks" | "entries" | "activity";
+
+export type BlockOptions = Record<string, string | boolean>;
 
 export interface Rect {
-  id: WidgetId;
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-/** Minimum size in fractions of the home area (computed from pixels by the view). */
+export interface Block extends Rect {
+  id: string;
+  type: BlockType;
+  /** Title chosen by the user; null = the type's name. */
+  title: string | null;
+  options: BlockOptions;
+}
+
+/** Minimum size of a block, in fractions of the home area (computed from pixels by the view). */
 export interface MinSize {
   w: number;
   h: number;
 }
 
-/** Minimum sizes in pixels. */
-export const WIDGETS: Record<WidgetId, { label: string; minW: number; minH: number }> = {
-  clock: { label: "Horloge", minW: 160, minH: 90 },
-  streaks: { label: "Séries", minW: 200, minH: 80 },
-  agenda: { label: "Agenda", minW: 240, minH: 140 },
-  tasks: { label: "Tâches du jour", minW: 240, minH: 140 },
-  recent: { label: "Dernières entrées", minW: 260, minH: 140 },
-  activity: { label: "Activité du jour", minW: 240, minH: 140 },
+export interface BlockTypeDef {
+  label: string;
+  /** One sentence shown in the "Ajouter un bloc" list. */
+  desc: string;
+  icon: IconName;
+  /** Minimum size in pixels. */
+  minW: number;
+  minH: number;
+  /** Size when added (fractions). */
+  size: { w: number; h: number };
+  defaults: BlockOptions;
+}
+
+export const BLOCK_TYPES: Record<BlockType, BlockTypeDef> = {
+  clock: {
+    label: "Horloge", desc: "L'heure et la date du jour, en grand.", icon: "alarm-clock",
+    minW: 160, minH: 90, size: { w: 0.25, h: 0.22 }, defaults: { seconds: false },
+  },
+  agenda: {
+    label: "Agenda", desc: "Rendez-vous et pense-bêtes : aujourd'hui, 3 jours ou la semaine.", icon: "calendar",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.45 }, defaults: { range: "today" },
+  },
+  tasks: {
+    label: "Tâches", desc: "Une liste de tâches filtrée : du jour, toutes, en retard ; par projet ou catégorie.", icon: "list-checks",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.45 }, defaults: { scope: "today", project: "", category: "" },
+  },
+  project: {
+    label: "Projet", desc: "Un projet : avancement, jalon suivant, prochaines tâches.", icon: "briefcase",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.35 }, defaults: { project: "" },
+  },
+  projects: {
+    label: "Projets en cours", desc: "Tous les projets actifs et leur avancement.", icon: "flag",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.35 }, defaults: {},
+  },
+  notes: {
+    label: "Notes récentes", desc: "Les dernières notes modifiées, d'un dossier ou de tous.", icon: "notebook-pen",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.35 }, defaults: { folder: "" },
+  },
+  note: {
+    label: "Note épinglée", desc: "Le contenu d'une note, toujours sous les yeux.", icon: "file-text",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.45 }, defaults: { note: "" },
+  },
+  memo: {
+    label: "Post-it", desc: "Un texte libre que tu écris directement dans le bloc.", icon: "pin",
+    minW: 160, minH: 90, size: { w: 0.25, h: 0.3 }, defaults: { text: "" },
+  },
+  streaks: {
+    label: "Séries d'habitudes", desc: "Nombre de jours d'affilée par habitude (sport, devoirs…).", icon: "flame",
+    minW: 200, minH: 80, size: { w: 0.4, h: 0.2 }, defaults: {},
+  },
+  entries: {
+    label: "Journal des habitudes", desc: "Tes dernières saisies (/sport, /cuisine…), d'une habitude ou de toutes.", icon: "book-open",
+    minW: 240, minH: 120, size: { w: 0.32, h: 0.35 }, defaults: { category: "" },
+  },
+  activity: {
+    label: "Temps d'écran", desc: "Les applis les plus utilisées aujourd'hui (ActivityWatch).", icon: "activity",
+    minW: 220, minH: 120, size: { w: 0.3, h: 0.35 }, defaults: {},
+  },
 };
 
-export const WIDGET_IDS = Object.keys(WIDGETS) as WidgetId[];
+export const BLOCK_TYPE_IDS = Object.keys(BLOCK_TYPES) as BlockType[];
 
-export const DEFAULT_LAYOUT: Rect[] = [
-  { id: "clock", x: 0, y: 0, w: 0.32, h: 0.24 },
-  { id: "streaks", x: 0.34, y: 0, w: 0.66, h: 0.24 },
-  { id: "agenda", x: 0, y: 0.27, w: 0.32, h: 0.73 },
-  { id: "tasks", x: 0.34, y: 0.27, w: 0.32, h: 0.73 },
-  { id: "recent", x: 0.68, y: 0.27, w: 0.32, h: 0.355 },
-  { id: "activity", x: 0.68, y: 0.645, w: 0.32, h: 0.355 },
+export const isBlockType = (v: unknown): v is BlockType => typeof v === "string" && v in BLOCK_TYPES;
+
+/** Title shown for a block: the user's, else the type's name. */
+export const blockTitle = (b: Pick<Block, "type" | "title">) => b.title?.trim() || BLOCK_TYPES[b.type].label;
+
+const block = (id: string, type: BlockType, x: number, y: number, w: number, h: number, options: BlockOptions = {}): Block => ({
+  id, type, title: null, options: { ...BLOCK_TYPES[type].defaults, ...options }, x, y, w, h,
+});
+
+/** First layout. Ids of these blocks are their type (older versions, pinned widgets). */
+export const DEFAULT_LAYOUT: Block[] = [
+  block("clock", "clock", 0, 0, 0.32, 0.24),
+  block("streaks", "streaks", 0.34, 0, 0.66, 0.24),
+  block("agenda", "agenda", 0, 0.27, 0.32, 0.73),
+  block("tasks", "tasks", 0.34, 0.27, 0.32, 0.73),
+  block("entries", "entries", 0.68, 0.27, 0.32, 0.355),
+  block("activity", "activity", 0.68, 0.645, 0.32, 0.355),
 ];
 
-export const defaultLayout = (): Rect[] => DEFAULT_LAYOUT.map((r) => ({ ...r }));
+export const defaultLayout = (): Block[] => DEFAULT_LAYOUT.map((b) => ({ ...b, options: { ...b.options } }));
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi);
 
 /** Keep a rectangle inside the area and above its minimum size. */
-export function clampRect(r: Rect, min: MinSize = { w: 0, h: 0 }): Rect {
+export function clampRect<T extends Rect>(r: T, min: MinSize = { w: 0, h: 0 }): T {
   const w = clamp(r.w, Math.min(min.w, 1), 1);
   const h = clamp(r.h, Math.min(min.h, 1), 1);
-  return { id: r.id, x: clamp(r.x, 0, 1 - w), y: clamp(r.y, 0, 1 - h), w, h };
+  return { ...r, x: clamp(r.x, 0, 1 - w), y: clamp(r.y, 0, 1 - h), w, h };
 }
 
 export type Handle = "move" | "e" | "s" | "se";
 
 /** Apply a pointer delta (fractions) to the rectangle the drag started from. */
-export function dragRect(start: Rect, handle: Handle, dx: number, dy: number, min: MinSize): Rect {
+export function dragRect<T extends Rect>(start: T, handle: Handle, dx: number, dy: number, min: MinSize): T {
   if (handle === "move") return clampRect({ ...start, x: start.x + dx, y: start.y + dy }, min);
   const w = handle === "s" ? start.w : clamp(start.w + dx, min.w, 1 - start.x);
   const h = handle === "e" ? start.h : clamp(start.h + dy, min.h, 1 - start.y);
@@ -65,10 +139,10 @@ export function dragRect(start: Rect, handle: Handle, dx: number, dy: number, mi
 
 /**
  * Magnetic alignment: edges closer than `threshold` to an edge of the area
- * or of another widget stick to it. Moves keep the size; resizes move only
+ * or of another block stick to it. Moves keep the size; resizes move only
  * the dragged edges.
  */
-export function snapRect(r: Rect, others: Rect[], handle: Handle, threshold: number): Rect {
+export function snapRect<T extends Rect & { id: string }>(r: T, others: (Rect & { id: string })[], handle: Handle, threshold: number): T {
   const xs = [0, 1];
   const ys = [0, 1];
   for (const o of others) {
@@ -104,47 +178,73 @@ export function snapRect(r: Rect, others: Rect[], handle: Handle, threshold: num
   return out;
 }
 
-/** Replace one widget's rectangle and put it on top. */
-export function updateRect(layout: Rect[], r: Rect): Rect[] {
-  return [...layout.filter((o) => o.id !== r.id), r];
+/** Replace one block and put it on top. */
+export function updateBlock(layout: Block[], b: Block): Block[] {
+  return [...layout.filter((o) => o.id !== b.id), b];
 }
 
-export function bringToFront(layout: Rect[], id: WidgetId): Rect[] {
-  const r = layout.find((o) => o.id === id);
-  if (!r || layout[layout.length - 1].id === id) return layout;
-  return updateRect(layout, r);
+export function bringToFront(layout: Block[], id: string): Block[] {
+  const b = layout.find((o) => o.id === id);
+  if (!b || layout[layout.length - 1].id === id) return layout;
+  return updateBlock(layout, b);
 }
 
-/** Show a hidden widget at its default place, on top. */
-export function addWidget(layout: Rect[], id: WidgetId): Rect[] {
-  if (layout.some((r) => r.id === id)) return layout;
-  return [...layout, { ...DEFAULT_LAYOUT.find((r) => r.id === id)! }];
+/** New block of `type`, cascaded from the top-left so it is never hidden under the same spot. */
+export function addBlock(layout: Block[], type: BlockType, id: string): Block[] {
+  const { size, defaults } = BLOCK_TYPES[type];
+  const n = layout.length % 8;
+  const b = clampRect({ id, type, title: null, options: { ...defaults }, x: 0.04 + n * 0.03, y: 0.04 + n * 0.04, ...size });
+  return [...layout, b];
 }
 
-export function removeWidget(layout: Rect[], id: WidgetId): Rect[] {
-  return layout.filter((r) => r.id !== id);
+export function removeBlock(layout: Block[], id: string): Block[] {
+  return layout.filter((b) => b.id !== id);
 }
 
-/** Visual order (top to bottom, left to right), used for keyboard focus order. */
-export function readingOrder(layout: Rect[]): Rect[] {
+/** Visual order (top to bottom, left to right). */
+export function readingOrder<T extends Rect>(layout: T[]): T[] {
   return [...layout].sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+const cleanOptions = (type: BlockType, raw: unknown): BlockOptions => {
+  const out: BlockOptions = { ...BLOCK_TYPES[type].defaults };
+  if (raw && typeof raw === "object") {
+    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+      if (typeof v === "string") out[k] = v.slice(0, 5000);
+      else if (typeof v === "boolean") out[k] = v;
+    }
+  }
+  return out;
+};
+
+const LEGACY_TYPES: Record<string, BlockType> = { recent: "entries" };
+
 /**
- * Validate a saved layout: unknown ids, duplicates and bad numbers are
- * dropped, rectangles are brought back inside the area. Anything that is
+ * Validate a saved layout: unknown types, duplicate ids and bad numbers are
+ * dropped, rectangles are brought back inside the area. Older layouts
+ * (`{ id: "clock", x, y, w, h }`, no type) are converted. Anything that is
  * not an array gives the default layout. An empty array is valid.
  */
-export function normalizeLayout(raw: unknown): Rect[] {
+export function normalizeLayout(raw: unknown): Block[] {
   if (!Array.isArray(raw)) return defaultLayout();
-  const out: Rect[] = [];
+  const out: Block[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") continue;
-    const { id, x, y, w, h } = item as Record<string, unknown>;
-    if (typeof id !== "string" || !(id in WIDGETS)) continue;
+    const o = item as Record<string, unknown>;
+    const id = typeof o.id === "string" ? o.id : "";
+    const rawType = o.type ?? LEGACY_TYPES[id] ?? id;
+    if (!/^[a-z0-9-]{1,48}$/.test(id) || !isBlockType(rawType)) continue;
+    const { x, y, w, h } = o;
     if (![x, y, w, h].every((n) => typeof n === "number" && Number.isFinite(n))) continue;
-    if ((w as number) <= 0 || (h as number) <= 0 || out.some((r) => r.id === id)) continue;
-    out.push(clampRect({ id: id as WidgetId, x: x as number, y: y as number, w: w as number, h: h as number }));
+    if ((w as number) <= 0 || (h as number) <= 0 || out.some((b) => b.id === id)) continue;
+    const title = typeof o.title === "string" && o.title.trim() ? o.title.trim().slice(0, 60) : null;
+    out.push(clampRect({
+      id, type: rawType, title, options: cleanOptions(rawType, o.options),
+      x: x as number, y: y as number, w: w as number, h: h as number,
+    }));
   }
   return out;
 }
+
+/** Short random id for a new block (lowercase, safe in window labels). */
+export const newBlockId = () => `b-${Math.random().toString(36).slice(2, 10)}`;

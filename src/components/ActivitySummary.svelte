@@ -6,6 +6,7 @@
   import { formatSeconds } from "../lib/activity/timeline";
 
   // Today's active time per app (top 5). Refreshed every 5 minutes.
+  let { bare = false }: { bare?: boolean } = $props();
   let aw = $state<AwDay | null>(null);
 
   async function load() {
@@ -25,10 +26,14 @@
 </script>
 
 <section>
-  <h2>
-    <button class="title" onclick={() => (app.view = "activity")}>Activité du jour</button>
-    {#if aw?.ok}<span class="accent">{formatSeconds(total)}</span>{/if}
-  </h2>
+  {#if !bare}
+    <h2>
+      <button class="title" onclick={() => (app.view = "activity")}>Activité du jour</button>
+      {#if aw?.ok}<span class="accent">{formatSeconds(total)}</span>{/if}
+    </h2>
+  {:else if aw?.ok && totals.length}
+    <p class="total">Total aujourd'hui <span class="accent">{formatSeconds(total)}</span></p>
+  {/if}
   {#if aw === null}
     <p class="muted">Chargement…</p>
   {:else if !aw.ok}
@@ -55,6 +60,7 @@
   .title:hover { color: var(--text); }
   .accent { color: var(--accent); margin-left: 6px; }
   .muted { color: var(--text-muted); }
+  .total { margin: 0 0 8px; color: var(--text-muted); font-size: 13px; }
   .link { background: none; border: none; color: var(--accent); padding: 0; cursor: pointer; font: inherit; }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   li { display: grid; grid-template-columns: 110px 1fr 56px; gap: 10px; align-items: center; padding: 8px 12px; background: var(--surface); border-radius: 8px; }
