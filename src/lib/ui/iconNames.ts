@@ -61,6 +61,9 @@ export const ICON_NAMES = [
   "tag",
   "search",
   "key-round",
+  "grip-horizontal",
+  "maximize-2",
+  "picture-in-picture-2",
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

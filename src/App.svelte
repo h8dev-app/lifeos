@@ -21,7 +21,10 @@
   import { autoReviewIfDue, generateReview, weekFromArgs, type ReviewResult } from "./lib/review/generate";
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
-  import { app, guard, reloadEntries, reloadNoteFolders, reloadSettings, reloadTasks, runGithubSync, say, type View } from "./lib/app.svelte";
+  import {
+    app, guard, reloadEntries, reloadNoteFolders, reloadSettings, reloadTasks, restoreScreenWidgets, runGithubSync, say, type View,
+  } from "./lib/app.svelte";
+  import { listen } from "@tauri-apps/api/event";
   import { closeOverlay, consumeEscape, onOverlayShown, setupOverlayAnimation } from "./lib/overlay";
   import { trackGlassPointer } from "./lib/ui/glass";
   import { createCategory } from "./lib/db/categories";
@@ -278,9 +281,13 @@
       else if (app.view !== "notes") bar.focus();
     });
     const animations = setupOverlayAnimation();
+    restoreScreenWidgets().catch((e) => console.error("widgets", e));
+    // A screen widget asked to open LifeOS on its view.
+    const unView = listen<View>("overlay://view", (e) => (app.view = e.payload));
     const stopGlass = trackGlassPointer();
     return () => {
       animations.then((fs) => fs.forEach((f) => f()));
+      unView.then((f) => f());
       stopGlass();
       unlisten.then((f) => f());
       clearInterval(githubTimer);

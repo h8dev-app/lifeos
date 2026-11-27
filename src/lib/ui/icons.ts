@@ -59,6 +59,9 @@ import Car from "@lucide/svelte/icons/car";
 import Tag from "@lucide/svelte/icons/tag";
 import Search from "@lucide/svelte/icons/search";
 import KeyRound from "@lucide/svelte/icons/key-round";
+import GripHorizontal from "@lucide/svelte/icons/grip-horizontal";
+import Maximize2 from "@lucide/svelte/icons/maximize-2";
+import PictureInPicture2 from "@lucide/svelte/icons/picture-in-picture-2";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ICONS: Record<IconName, Component<any>> = {
@@ -120,4 +123,7 @@ export const ICONS: Record<IconName, Component<any>> = {
   "tag": Tag,
   "search": Search,
   "key-round": KeyRound,
+  "grip-horizontal": GripHorizontal,
+  "maximize-2": Maximize2,
+  "picture-in-picture-2": PictureInPicture2,
 };

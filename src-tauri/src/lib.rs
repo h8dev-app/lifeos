@@ -12,11 +12,12 @@ mod wallpaper;
 mod pty;
 mod secrets;
 mod secure_fetch;
+mod widgets;
 
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    App, AppHandle, RunEvent, WindowEvent,
+    App, AppHandle, Emitter, RunEvent, WindowEvent,
 };
 
 /// CLI flag that shows/hides the overlay of the running instance.
@@ -27,12 +28,48 @@ const TOGGLE_FLAG: &str = "--toggle";
 const SHORTCUT: &str = "Ctrl+Alt+Space";
 
 pub fn run() {
+    let context = tauri::generate_context!();
+    let args: Vec<String> = std::env::args().collect();
+    match widgets::widget_arg(&args) {
+        Some(kind) => run_widget(context, kind),
+        None => run_main(context),
+    }
+}
+
+/// A screen widget process (`lifeos --widget agenda`, see widgets.rs):
+/// one small window, the database, the settings; no tray, no shortcut.
+fn run_widget(mut context: tauri::Context, kind: String) {
+    // The overlay window of tauri.conf.json is not created here.
+    context.config_mut().app.windows.clear();
+    tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .invoke_handler(tauri::generate_handler![
+            db::db_url,
+            local_fetch::local_fetch,
+            widgets::widget_ready,
+            widgets::widget_quit,
+            widgets::widget_open_app
+        ])
+        .setup(move |app| {
+            db::setup(app)?;
+            widgets::setup_widget(app, &kind)?;
+            Ok(())
+        })
+        .run(context)
+        .expect("error while running a LifeOS widget");
+}
+
+fn run_main(context: tauri::Context) {
     tauri::Builder::default()
         // Must be registered first. When a second `lifeos` process starts,
         // it exits right away and this callback runs in the first instance.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if args.iter().any(|a| a == TOGGLE_FLAG) {
                 overlay::toggle(app);
+            } else if let Some(view) = widgets::open_arg(&args) {
+                // A widget asks to open LifeOS on its view.
+                overlay::show(app);
+                let _ = app.emit("overlay://view", view);
             } else {
                 overlay::show(app);
             }
@@ -51,6 +88,7 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(pty::PtyState::default())
+        .manage(widgets::Widgets::default())
         .invoke_handler(tauri::generate_handler![
             overlay::overlay_toggle,
             overlay::overlay_hide,
@@ -62,6 +100,8 @@ pub fn run() {
             secrets::secret_exists,
             secure_fetch::secure_fetch,
             local_fetch::local_fetch,
+            widgets::widget_open,
+            widgets::widget_close,
             pty::command_exists,
             pty::pty_spawn,
             pty::pty_write,
@@ -87,7 +127,7 @@ pub fn run() {
                 let _ = window.hide();
             }
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building LifeOS")
         .run(|app, event| {
             // Quitting LifeOS also stops any `claude` started in the panel.

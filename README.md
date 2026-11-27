@@ -222,3 +222,9 @@ Contenu : `lifeos.db` (SQLite), `notes/` (fichiers Markdown), `settings.json` (r
 Réglages → Apparence : style **Sobre** ou **Liquid glass**, thème (Auto, Graphite, Nuit, Forêt, Clair, Sable), couleur d'accent, fond **Transparent** (les fenêtres restent visibles derrière LifeOS) ou **Fond d'écran**, voile, opacité et flou des panneaux.
 
 Icônes : [Lucide](https://lucide.dev) (licence ISC).
+
+## Widgets d'écran
+
+Un bloc de l'accueil (agenda, tâches, horloge…) peut rester affiché en petite fenêtre, toujours au premier plan, pendant que LifeOS est masqué : bouton « épingler » en haut à droite du bloc, ou Réglages → Widgets d'écran. On le déplace par son titre, on le redimensionne par le coin ; sa place est gardée. Les widgets se cachent quand l'overlay s'ouvre.
+
+Sous GNOME Wayland, chaque widget tourne dans son propre processus via XWayland : Wayland ne permet pas à une appli de garder une fenêtre au premier plan ni de choisir sa position.

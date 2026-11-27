@@ -9,7 +9,9 @@ import { today } from "./dates";
 import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./db/tasks";
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
-import { DEFAULT_SETTINGS, loadSettings, type Settings } from "./settings";
+import { DEFAULT_SETTINGS, loadScreenWidgets, loadSettings, saveScreenWidgets, type Settings } from "./settings";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { applyAppearance } from "./theme";
 
 export type View = "dashboard" | "tasks" | "agenda" | "notes" | "activity" | "claude" | "settings";
@@ -46,7 +48,32 @@ export const app = $state({
   github: null as GithubSyncState,
   /** Claude panel: `session` changes to start a new terminal. */
   claude: { cwd: null as string | null, running: false, session: 0, opened: false },
+  /** Widgets pinned on the screen (see src-tauri/src/widgets.rs). */
+  screenWidgets: [] as string[],
 });
+
+// ------------------------------------------------------------ screen widgets
+
+/** Pin or unpin a home block as a screen widget. */
+export async function toggleScreenWidget(kind: string): Promise<void> {
+  const on = !app.screenWidgets.includes(kind);
+  await guard(async () => {
+    await invoke(on ? "widget_open" : "widget_close", { kind });
+    app.screenWidgets = on ? [...app.screenWidgets, kind] : app.screenWidgets.filter((k) => k !== kind);
+    await saveScreenWidgets(app.screenWidgets);
+    say(on ? "Widget épinglé : il reste à l'écran quand LifeOS est masqué." : "Widget retiré de l'écran.");
+  });
+}
+
+/** At start-up: reopen the pinned widgets; follow the ones closed by their ✕. */
+export async function restoreScreenWidgets(): Promise<void> {
+  app.screenWidgets = await loadScreenWidgets();
+  for (const kind of app.screenWidgets) invoke("widget_open", { kind }).catch((e) => console.error("widget", e));
+  await listen<string>("widget://closed", (e) => {
+    app.screenWidgets = app.screenWidgets.filter((k) => k !== e.payload);
+    saveScreenWidgets(app.screenWidgets).catch(() => {});
+  });
+}
 
 export function say(message: string, kind: ToastKind = "info") {
   app.toast = { message, kind };

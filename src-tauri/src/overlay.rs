@@ -31,6 +31,8 @@ pub fn show(app: &AppHandle) {
     let Some(window) = main_window(app) else { return };
     // `let _ =` ignores errors on purpose: a failed call must never crash the app.
     apply_mode(&window);
+    // Screen widgets (always on top) would cover the overlay: hide them.
+    crate::widgets::broadcast(app, "hide");
     let _ = window.show();
     let _ = window.unminimize();
     let _ = window.set_always_on_top(true);
@@ -53,6 +55,7 @@ pub fn hide(app: &AppHandle) {
     if let Some(window) = main_window(app) {
         let _ = app.emit(HIDDEN_EVENT, ());
         let _ = window.hide();
+        crate::widgets::broadcast(app, "show");
     }
 }
 

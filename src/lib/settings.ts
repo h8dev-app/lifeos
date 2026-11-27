@@ -81,3 +81,13 @@ export async function loadDashboardLayout(): Promise<unknown> {
 export async function saveDashboardLayout(layout: unknown): Promise<void> {
   await (await getStore()).set("dashboardFree", layout);
 }
+
+/** Widgets pinned on the screen (kinds), reopened at start-up. */
+export async function loadScreenWidgets(): Promise<string[]> {
+  const v = await (await getStore()).get("screenWidgets");
+  return Array.isArray(v) ? v.filter((k): k is string => typeof k === "string") : [];
+}
+
+export async function saveScreenWidgets(kinds: string[]): Promise<void> {
+  await (await getStore()).set("screenWidgets", kinds);
+}

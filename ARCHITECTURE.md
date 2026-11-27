@@ -41,6 +41,8 @@ Close (Alt+F4) ─► hidden, not quit. Quit = tray menu.
 | `src-tauri/src/secrets.rs` | Keyring: `secret_set` / `secret_delete` / `secret_exists` (no read command) |
 | `src-tauri/src/local_fetch.rs` | HTTP to Ollama / ActivityWatch on 127.0.0.1 without `Origin` header (tested) |
 | `src-tauri/src/pty.rs` | PTY for the Claude panel: `command_exists`, `pty_spawn/write/resize/kill`, events `pty://data` / `pty://exit` (tested) |
+| `src-tauri/src/widgets.rs` | Screen widgets: `lifeos --widget <kind>` processes (XWayland on GNOME Wayland for always-on-top and positions), driven through stdin (`hide`/`show`, EOF = close); `widget_open/close`, `--open <view>` (tested) |
+| `src-tauri/src/wallpaper.rs` | Desktop wallpaper bytes from GNOME settings, for the wallpaper background mode (tested) |
 | `src-tauri/src/secure_fetch.rs` | HTTPS with a keyring secret, 3 allowed hosts, each tied to one secret (tested) |
 | `src/lib/ai/` | `provider.ts` (interface), `ollama.ts`, `anthropic.ts`, `openai.ts`, `registry.ts`, `prompt.ts`, `entrySchema.ts` (tested) |
 | `src/lib/activity/aggregate.ts` | ActivityWatch events → active spans, totals per app/title, timeline blocks (tested) |
@@ -259,3 +261,9 @@ ResizeObserver ─► fit ─► pty_resize         EOF ─► "pty://exit" ─�
   SQLite stays the source of truth.
 - Google Calendar / Gmail, screenpipe. `AiProvider.chat` stays reserved for a
   future conversation mode.
+
+## Appearance and screen widgets
+
+- `src/lib/theme.ts`: themes, accents, styles (Sobre / Liquid glass), applied as CSS variables; `app.css` derives surfaces with `color-mix()`.
+- Background modes: *Transparent* uses a maximized window (Wayland hides everything under a full screen window), *Fond d'écran* a full screen window with the wallpaper drawn by the page.
+- Screen widgets reuse `BlockContent.svelte` in `Widget.svelte`; `main.ts` mounts it for windows labelled `widget-*`. Each widget refreshes its data every 30 s and keeps its geometry in `widget-<kind>.json`.

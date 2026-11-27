@@ -1,40 +1,14 @@
 <script lang="ts">
   import Icon from "../components/Icon.svelte";
-  import { onDestroy, onMount } from "svelte";
-  import { formatDate, formatTime } from "../lib/clock";
-  import RecentEntries from "../components/RecentEntries.svelte";
-  import TaskList from "../components/TaskList.svelte";
-  import Streaks from "../components/Streaks.svelte";
-  import ActivitySummary from "../components/ActivitySummary.svelte";
-  import AgendaToday from "../components/AgendaToday.svelte";
-  import { app, guard, reloadEntries, say } from "../lib/app.svelte";
-  import { deleteEntry } from "../lib/db/entries";
-  import { startOfDayIso, today } from "../lib/dates";
+  import { onMount } from "svelte";
+  import BlockContent from "../components/BlockContent.svelte";
+  import { app, guard, say, toggleScreenWidget } from "../lib/app.svelte";
   import { onEscape } from "../lib/overlay";
   import { loadDashboardLayout, saveDashboardLayout } from "../lib/settings";
   import {
     addWidget, bringToFront, clampRect, defaultLayout, dragRect, normalizeLayout, removeWidget,
     snapRect, updateRect, WIDGET_IDS, WIDGETS, type Handle, type MinSize, type Rect, type WidgetId,
   } from "../lib/dashboard/layout";
-
-  let now = $state(new Date());
-  const timer = setInterval(() => (now = new Date()), 1000);
-  onDestroy(() => clearInterval(timer));
-
-  // Today's open tasks (carried over ones included), then those done today.
-  const todayTasks = $derived(
-    app.tasks
-      .filter((t) => (t.doneAt ? t.doneAt >= startOfDayIso(now) : !t.plannedFor || t.plannedFor <= today(now)))
-      .sort((a, b) => Number(!!a.doneAt) - Number(!!b.doneAt) || a.priority - b.priority),
-  );
-
-  async function remove(id: string) {
-    await guard(async () => {
-      await deleteEntry(id);
-      await reloadEntries();
-      say("Entrée supprimée.");
-    });
-  }
 
   // ------------------------------------------------------------ layout
   // Free placement: rectangles in fractions of the home area, overlap
@@ -159,29 +133,15 @@
               aria-label="Masquer {WIDGETS[r.id].label}" title="Masquer"><Icon name="x" size={12} /></button>
           </header>
         {/if}
+        {#if !editing}
+          <button class="pin" class:on={app.screenWidgets.includes(r.id)} onclick={() => toggleScreenWidget(r.id)}
+            title={app.screenWidgets.includes(r.id) ? "Retirer de l'écran" : "Épingler sur l'écran (reste visible quand LifeOS est masqué)"}
+            aria-label="Épingler {WIDGETS[r.id].label} sur l'écran">
+            <Icon name="picture-in-picture-2" size={14} />
+          </button>
+        {/if}
         <div class="body">
-          {#if r.id === "clock"}
-            <div class="clock">
-              <div class="time">{formatTime(now)}</div>
-              <div class="date">{formatDate(now)}</div>
-            </div>
-          {:else if r.id === "streaks"}
-            <h2>Séries</h2>
-            {#if app.streaks.length}<Streaks />{:else}<p class="empty">Aucune série. Enregistre une entrée deux jours de suite.</p>{/if}
-          {:else if r.id === "agenda"}
-            <AgendaToday />
-          {:else if r.id === "tasks"}
-            <h2><button class="title" onclick={() => (app.view = "tasks")}>Tâches du jour</button></h2>
-            {#if todayTasks.length}
-              <TaskList tasks={todayTasks} compact />
-            {:else}
-              <p class="empty">Aucune tâche. <code>/tache …</code></p>
-            {/if}
-          {:else if r.id === "recent"}
-            <RecentEntries entries={app.recent} categories={app.categories} ondelete={remove} />
-          {:else if r.id === "activity"}
-            <ActivitySummary />
-          {/if}
+          <BlockContent id={r.id} />
         </div>
         {#if editing}
           {#each ["e", "s", "se"] as const as h (h)}
@@ -237,6 +197,14 @@
     width: 24px; height: 24px; color: var(--text); cursor: pointer; font-size: 11px; padding: 0;
   }
   .x:hover { color: var(--error); }
+  .pin {
+    position: absolute; top: 8px; right: 8px; z-index: 1; display: grid; place-items: center;
+    width: 26px; height: 26px; padding: 0; border-radius: 8px; border: 1px solid transparent;
+    background: none; color: var(--text-muted); cursor: pointer; opacity: 0;
+  }
+  .w:hover .pin, .pin:focus-visible, .pin.on { opacity: 1; }
+  .pin:hover { background: var(--surface); border-color: var(--border); color: var(--text); }
+  .pin.on { color: var(--accent); }
   .handle { position: absolute; z-index: 1; touch-action: none; }
   .h-e { top: 12px; bottom: 12px; right: -4px; width: 10px; cursor: ew-resize; }
   .h-s { left: 12px; right: 12px; bottom: -4px; height: 10px; cursor: ns-resize; }
@@ -245,14 +213,6 @@
     border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); border-bottom-right-radius: 14px;
   }
 
-  .clock { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .time { font-size: clamp(24px, min(40cqh, 18cqw), 96px); font-weight: 200; letter-spacing: 2px; line-height: 1.1; }
-  .date { color: var(--text-muted); font-size: clamp(12px, 10cqh, 18px); }
   .w-clock .body { padding: 8px; }
 
-  h2 { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 12px 0; }
-  .title { background: none; border: none; padding: 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
-  .title:hover { color: var(--text); }
-  .empty { color: var(--text-muted); }
-  code { font-family: var(--mono); color: var(--text); }
 </style>

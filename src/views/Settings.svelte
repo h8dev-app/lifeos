@@ -1,7 +1,8 @@
 <script lang="ts">
   import Icon from "../components/Icon.svelte";
   import { onMount } from "svelte";
-  import { app, guard, reloadSettings, runGithubSync, say } from "../lib/app.svelte";
+  import { app, guard, reloadSettings, runGithubSync, say, toggleScreenWidget } from "../lib/app.svelte";
+  import { WIDGET_IDS, WIDGETS } from "../lib/dashboard/layout";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
   import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
@@ -196,6 +197,17 @@
   </div>
   <p class="hint">Voile : couvre ce qui est derrière LifeOS. Panneaux : à 100 %, ils sont opaques et rien ne passe à travers.</p>
 
+  <h2>Widgets d'écran</h2>
+  <p class="hint">Un bloc de l'accueil en petite fenêtre, toujours au premier plan, qui reste affiché quand LifeOS est masqué (ex. l'agenda en haut à gauche pendant une vidéo). Glisse-le par son titre, redimensionne-le par le coin ; sa place est gardée. Aussi depuis l'accueil : bouton <Icon name="picture-in-picture-2" size={13} /> d'un bloc.</p>
+  <div class="widgets">
+    {#each WIDGET_IDS as id (id)}
+      <label class="check">
+        <input type="checkbox" checked={app.screenWidgets.includes(id)} onchange={() => toggleScreenWidget(id)} />
+        {WIDGETS[id].label}
+      </label>
+    {/each}
+  </div>
+
   <h2>Démarrage</h2>
   <label class="check">
     <input type="checkbox" checked={!!autostart} disabled={autostart === null || isDev}
@@ -334,6 +346,7 @@
   }
   .accent.on { border-color: var(--text); }
   .sliders { margin-top: 12px; }
+  .widgets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 16px; }
   .providers { display: flex; flex-direction: column; gap: 6px; }
   .providers label {
     display: flex; gap: 10px; align-items: center; padding: 10px 12px;
