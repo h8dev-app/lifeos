@@ -56,7 +56,7 @@ pub fn widget_arg(args: &[String]) -> Option<String> {
 pub fn open_arg(args: &[String]) -> Option<String> {
     let i = args.iter().position(|a| a == OPEN_FLAG)?;
     let view = args.get(i + 1)?;
-    const VIEWS: [&str; 7] = ["dashboard", "tasks", "agenda", "notes", "activity", "claude", "settings"];
+    const VIEWS: [&str; 8] = ["dashboard", "tasks", "projects", "agenda", "notes", "activity", "claude", "settings"];
     VIEWS.contains(&view.as_str()).then(|| view.clone())
 }
 

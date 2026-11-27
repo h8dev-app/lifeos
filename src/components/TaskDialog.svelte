@@ -14,14 +14,19 @@
     categoryId: string | null;
     newCategory: string;
     dueDate: string | null;
+    projectId: string | null;
+    milestoneId: string | null;
   }
 
   let {
-    task = null, defaultStatus = "todo", defaultCategoryId = null, onsave, ondelete, oncancel,
+    task = null, defaultStatus = "todo", defaultCategoryId = null, defaultProjectId = null, defaultMilestoneId = null,
+    onsave, ondelete, oncancel,
   }: {
     task?: Task | null;
     defaultStatus?: TaskStatus;
     defaultCategoryId?: string | null;
+    defaultProjectId?: string | null;
+    defaultMilestoneId?: string | null;
     onsave: (f: TaskForm) => void;
     ondelete?: () => void;
     oncancel: () => void;
@@ -39,6 +44,13 @@
   let category = $state<string>(task?.categoryId ?? defaultCategoryId ?? "");
   let newCategory = $state("");
   // svelte-ignore state_referenced_locally
+  let project = $state<string>(task?.projectId ?? defaultProjectId ?? "");
+  // svelte-ignore state_referenced_locally
+  let milestone = $state<string>(task?.milestoneId ?? defaultMilestoneId ?? "");
+  const projectMilestones = $derived(app.milestones.filter((m) => m.projectId === project && !m.doneAt));
+  // A milestone belongs to one project: changing project clears it.
+  $effect(() => { if (milestone && !projectMilestones.some((m) => m.id === milestone)) milestone = ""; });
+  // svelte-ignore state_referenced_locally
   let dueDate = $state(task?.dueDate ?? "");
   let confirmDelete = $state(false);
   let input: HTMLInputElement;
@@ -55,6 +67,8 @@
       categoryId: category === NEW || category === "" ? null : category,
       newCategory: category === NEW ? newCategory.trim() : "",
       dueDate: dueDate || null,
+      projectId: project || null,
+      milestoneId: project && milestone ? milestone : null,
     });
   }
 
@@ -101,6 +115,26 @@
           { value: NEW, label: "+ Nouvelle catégorie…" },
         ]} />
       </div>
+      {#if app.projects.length}
+        <div class="row">
+          <div class="field">
+            <span class="label">Projet</span>
+            <Select label="Projet" bind:value={project} options={[
+              { value: "", label: "Aucun projet" },
+              ...app.projects.filter((p) => p.status !== "done" || p.id === project).map((p) => ({ value: p.id, label: p.name, color: p.color })),
+            ]} />
+          </div>
+          {#if project && projectMilestones.length}
+            <div class="field">
+              <span class="label">Jalon</span>
+              <Select label="Jalon" bind:value={milestone} options={[
+                { value: "", label: "Aucun jalon" },
+                ...projectMilestones.map((m) => ({ value: m.id, label: m.title })),
+              ]} />
+            </div>
+          {/if}
+        </div>
+      {/if}
       {#if category === NEW}
         <!-- svelte-ignore a11y_autofocus -->
         <input bind:value={newCategory} placeholder="Nom (ex. Cours)" aria-label="Nouvelle catégorie" autofocus />

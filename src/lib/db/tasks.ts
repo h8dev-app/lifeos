@@ -8,6 +8,8 @@ export interface Task {
   status: TaskStatus;
   priority: Priority;
   categoryId: string | null;
+  projectId: string | null;
+  milestoneId: string | null;
   plannedFor: string | null; // YYYY-MM-DD
   dueDate: string | null;    // YYYY-MM-DD
   doneAt: string | null;     // ISO timestamp
@@ -27,6 +29,8 @@ interface TaskRow {
   status: TaskStatus;
   priority: number;
   category_id: string | null;
+  project_id: string | null;
+  milestone_id: string | null;
   planned_for: string | null;
   due_date: string | null;
   done_at: string | null;
@@ -34,7 +38,8 @@ interface TaskRow {
   created_at: string;
 }
 
-const COLUMNS = "id, title, status, priority, category_id, planned_for, due_date, done_at, position, created_at";
+const COLUMNS =
+  "id, title, status, priority, category_id, project_id, milestone_id, planned_for, due_date, done_at, position, created_at";
 
 const toTask = (r: TaskRow): Task => ({
   id: r.id,
@@ -42,6 +47,8 @@ const toTask = (r: TaskRow): Task => ({
   status: r.status,
   priority: (r.priority as Priority) ?? 2,
   categoryId: r.category_id,
+  projectId: r.project_id,
+  milestoneId: r.milestone_id,
   plannedFor: r.planned_for,
   dueDate: r.due_date,
   doneAt: r.done_at,
@@ -53,6 +60,8 @@ export interface NewTask {
   title: string;
   dueDate?: string | null;
   categoryId?: string | null;
+  projectId?: string | null;
+  milestoneId?: string | null;
   priority?: Priority;
   status?: TaskStatus;
   plannedFor?: string | null;
@@ -63,10 +72,11 @@ export async function addTask(t: NewTask): Promise<void> {
   const now = nowIso();
   const status = t.status ?? "todo";
   await db.execute(
-    `INSERT INTO tasks (id, title, status, priority, category_id, planned_for, due_date, done_at, position, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, (SELECT COALESCE(MAX(position), 0) + 1 FROM tasks), $9, $9)`,
-    [newId(), t.title, status, t.priority ?? 2, t.categoryId ?? null, t.plannedFor ?? today(), t.dueDate ?? null,
-     status === "done" ? now : null, now],
+    `INSERT INTO tasks (id, title, status, priority, category_id, project_id, milestone_id, planned_for, due_date, done_at,
+       position, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, (SELECT COALESCE(MAX(position), 0) + 1 FROM tasks), $11, $11)`,
+    [newId(), t.title, status, t.priority ?? 2, t.categoryId ?? null, t.projectId ?? null, t.milestoneId ?? null,
+     t.plannedFor ?? today(), t.dueDate ?? null, status === "done" ? now : null, now],
   );
 }
 
@@ -117,10 +127,27 @@ export const postponeTask = (id: string) => updateMany([id], "planned_for = $2",
 
 export async function updateTask(
   id: string,
-  t: { title: string; dueDate: string | null; categoryId: string | null; priority: Priority },
+  t: {
+    title: string; dueDate: string | null; categoryId: string | null; priority: Priority;
+    projectId: string | null; milestoneId: string | null;
+  },
 ): Promise<void> {
-  await updateMany([id], "title = $2, due_date = $3, category_id = $4, priority = $5",
-    [t.title, t.dueDate, t.categoryId, t.priority]);
+  await updateMany([id], "title = $2, due_date = $3, category_id = $4, priority = $5, project_id = $6, milestone_id = $7",
+    [t.title, t.dueDate, t.categoryId, t.priority, t.projectId, t.milestoneId]);
+}
+
+export const setTasksProject = (ids: string[], projectId: string | null) =>
+  updateMany(ids, "project_id = $2, milestone_id = NULL", [projectId]);
+
+/** Every task of the projects (done ones included, whatever their age): progress and project pages. */
+export async function listProjectTasks(projectId?: string): Promise<Task[]> {
+  const db = await getDb();
+  const rows = await db.select<TaskRow[]>(
+    `SELECT ${COLUMNS} FROM tasks WHERE deleted_at IS NULL AND project_id ${projectId ? "= $1" : "IS NOT NULL"}
+     ORDER BY position`,
+    projectId ? [projectId] : [],
+  );
+  return rows.map(toTask);
 }
 
 // ---------------------------------------------------------- categories

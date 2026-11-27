@@ -6,13 +6,14 @@
     atMinutes, defaultReminder, formatMinutes, minutesOf, REMINDER_CHOICES, type AgendaEvent, type EventKind,
   } from "../lib/agenda/agenda";
   import type { EventInput } from "../lib/db/events";
+  import { app } from "../lib/app.svelte";
 
   // Create or edit an appointment / memo. `event` null = creation with `initial`.
   let {
     event = null, initial, onsave, ondelete, onnote, oncancel,
   }: {
     event?: AgendaEvent | null;
-    initial: { kind: EventKind; day: string; start: number | null; end: number | null };
+    initial: { kind: EventKind; day: string; start: number | null; end: number | null; projectId?: string | null };
     onsave: (e: EventInput) => void;
     ondelete?: () => void;
     /** Create (if none) and open the linked note. */
@@ -34,6 +35,7 @@
   let location = $state(src?.location ?? "");
   let description = $state(src?.description ?? "");
   let remind = $state(String(src ? src.remindMinutes : defaultReminder(init.kind)));
+  let project = $state(src?.projectId ?? init.projectId ?? "");
   let confirmDelete = $state(false);
   let input: HTMLInputElement;
 
@@ -66,6 +68,7 @@
       description: description.trim() || null,
       remindMinutes: remind === "null" ? null : Number(remind),
       noteId: src?.noteId ?? null,
+      projectId: project || null,
     });
   }
 
@@ -112,6 +115,15 @@
         <Select label="Rappel" bind:value={remind}
           options={REMINDER_CHOICES.map((c) => ({ value: String(c.value), label: c.label }))} />
       </div>
+
+      {#if app.projects.length}
+        <div class="field"><span class="label">Projet</span>
+          <Select label="Projet" bind:value={project} options={[
+            { value: "", label: "Aucun projet" },
+            ...app.projects.map((p) => ({ value: p.id, label: p.name, color: p.color })),
+          ]} />
+        </div>
+      {/if}
 
       {#if event && onnote}
         <button type="button" class="link" onclick={onnote}>

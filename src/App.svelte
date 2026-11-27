@@ -6,6 +6,7 @@
   import Toast from "./components/Toast.svelte";
   import Dashboard from "./views/Dashboard.svelte";
   import Tasks from "./views/Tasks.svelte";
+  import Projects from "./views/Projects.svelte";
   import Notes from "./views/Notes.svelte";
   import Settings from "./views/Settings.svelte";
   import Activity from "./views/Activity.svelte";
@@ -22,8 +23,11 @@
   import EntryPreview from "./components/EntryPreview.svelte";
   import { getProvider } from "./lib/ai/registry";
   import {
-    app, guard, reloadEntries, reloadNoteFolders, reloadSettings, reloadTasks, restoreScreenWidgets, runGithubSync, say, type View,
+    app, guard, reloadEntries, reloadNoteFolders, reloadProjects, reloadSettings, reloadTasks, restoreScreenWidgets, runGithubSync, say,
+    type View,
   } from "./lib/app.svelte";
+  import { createProject } from "./lib/db/projects";
+  import { findProject, type Project } from "./lib/projects/projects";
   import { listen } from "@tauri-apps/api/event";
   import { closeOverlay, consumeEscape, onOverlayShown, setupOverlayAnimation } from "./lib/overlay";
   import { trackGlassPointer } from "./lib/ui/glass";
@@ -36,11 +40,15 @@
   import { parseCatArgs, parseInput } from "./lib/parsing/slash";
   import { parseTaskArgs } from "./lib/parsing/task";
   import { formatEntryData } from "./lib/format";
-  import { formatDay } from "./lib/dates";
+  import { formatDay, parseDateWord } from "./lib/dates";
 
   let bar: CommandBar;
   const commands = $derived(allCommands(app.categories));
-  const tokenData = $derived({ taskCategories: app.taskCategories.map((c) => c.name), noteFolders: app.noteFolders });
+  const tokenData = $derived({
+    taskCategories: app.taskCategories.map((c) => c.name),
+    noteFolders: app.noteFolders,
+    projects: app.projects.map((p) => ({ slug: p.slug, name: p.name })),
+  });
 
   async function handle(text: string): Promise<boolean> {
     const r = parseInput(text, app.categories);
@@ -58,6 +66,8 @@
             case "note": return handleNote(r.args);
             case "claude": return handleClaude(r.args);
             case "bilan": return handleReview(r.args);
+            case "projet":
+            case "projets": return handleProject(r.args);
             case "rdv": return handleEvent(r.args, "event");
             case "memo": return handleEvent(r.args, "memo");
             case "help":
@@ -133,13 +143,47 @@
     return true;
   }
 
+  /** `+mot` → project, or an error toast (undefined). null when no `+`. */
+  function projectOf(word: string | null): Project | null | undefined {
+    if (!word) return null;
+    const p = findProject(word, app.projects);
+    if (!p) say(`Projet « ${word} » inconnu. Crée-le avec /projet ${word}`, "error");
+    return p;
+  }
+
+  /** `/projet` opens the list; `/projet <nom> [@date]` opens it, or creates it. */
+  async function handleProject(args: string): Promise<boolean> {
+    const words = args.trim().split(/\s+/).filter(Boolean);
+    const dateWord = words.find((w) => w.startsWith("@") && w.length > 1);
+    const name = words.filter((w) => w !== dateWord).join(" ");
+    if (!name) { app.view = "projects"; return true; }
+    const existing = findProject(name, app.projects) ?? app.projects.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      app.openProjectId = existing.id;
+      app.view = "projects";
+      return true;
+    }
+    const dueDate = dateWord ? parseDateWord(dateWord.slice(1)) : null;
+    if (dateWord && !dueDate) { say(`Date « ${dateWord} » non comprise (ex. @31/12).`, "error"); return false; }
+    const notesFolder = await createFolder(name).catch(() => null);
+    const p = await createProject({ name, dueDate, notesFolder });
+    await Promise.all([reloadProjects(), reloadNoteFolders()]);
+    app.openProjectId = p.id;
+    app.view = "projects";
+    say(`Projet « ${p.name} » créé. Ajoute-lui des tâches avec /tache … +${p.slug}`, "ok");
+    return true;
+  }
+
   async function handleTask(args: string): Promise<boolean> {
     const parsed = parseTaskArgs(args);
     if ("error" in parsed) { say(parsed.error, "error"); return false; }
+    const project = projectOf(parsed.project);
+    if (project === undefined) return false;
     const categoryId = parsed.category ? await ensureTaskCategory(parsed.category) : null;
-    await addTask({ title: parsed.title, dueDate: parsed.dueDate, categoryId, priority: parsed.priority ?? 2 });
+    await addTask({ title: parsed.title, dueDate: parsed.dueDate, categoryId, priority: parsed.priority ?? 2, projectId: project?.id ?? null });
     await reloadTasks();
     const bits = [
+      project && `+${project.slug}`,
       parsed.category && `#${parsed.category}`,
       parsed.priority && priorityOf(parsed.priority).label.toLowerCase(),
       parsed.dueDate && `échéance ${formatDay(parsed.dueDate)}`,
@@ -153,11 +197,14 @@
   async function handleEvent(args: string, kind: EventKind): Promise<boolean> {
     const p = parseEventArgs(args, kind);
     if ("error" in p) { say(p.error, "error"); return false; }
+    const project = projectOf(p.project);
+    if (project === undefined) return false;
     await createEvent({
       title: p.title, kind, day: p.day, allDay: p.allDay,
       startAt: p.start !== null ? atMinutes(p.day, p.start) : null,
       endAt: p.end !== null ? atMinutes(p.day, p.end) : null,
       location: p.location, description: null, remindMinutes: defaultReminder(kind), noteId: null,
+      projectId: project?.id ?? null,
     });
     app.agendaVersion++;
     const when = `${formatDay(p.day)}${p.start !== null ? ` à ${formatMinutes(p.start)}` : ""}`;
@@ -194,7 +241,7 @@
     reviewBusy = true;
     try {
       const r = await autoReviewIfDue();
-      if (r) say(r.ai ? `Ton bilan de la semaine dernière est prêt (Notes, Ctrl+3).` : `Bilan de la semaine dernière créé sans texte IA (${r.reason}).`, r.ai ? "ok" : "info");
+      if (r) say(r.ai ? `Ton bilan de la semaine dernière est prêt (Notes, Ctrl+5).` : `Bilan de la semaine dernière créé sans texte IA (${r.reason}).`, r.ai ? "ok" : "info");
     } catch (e) {
       console.error("auto review", e);
     } finally {
@@ -235,7 +282,7 @@
   // Once the Claude panel has been shown, keep it mounted (session survives).
   $effect(() => { if (app.view === "claude") app.claude.opened = true; });
 
-  const VIEWS: View[] = ["dashboard", "tasks", "agenda", "notes", "activity", "claude", "settings"];
+  const VIEWS: View[] = ["dashboard", "tasks", "projects", "agenda", "notes", "activity", "claude", "settings"];
 
   function onKeydown(e: KeyboardEvent) {
     // Inside the terminal, Escape belongs to Claude (it interrupts it).
@@ -247,7 +294,7 @@
       // First Escape cancels an AI proposal, the next one closes the overlay.
       if (app.pending) cancelPending();
       else if (e.shiftKey || !consumeEscape()) closeOverlay();
-    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6", "7"].includes(e.key)) {
+    } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6", "7", "8"].includes(e.key)) {
       e.preventDefault();
       app.view = VIEWS[Number(e.key) - 1];
     }
@@ -266,7 +313,7 @@
     reloadNoteFolders().catch(() => {});
     const wallpaper = () => loadWallpaper().catch((e) => console.error("wallpaper", e));
     wallpaper();
-    const dataReady = Promise.all([reloadEntries(), reloadTasks()]).catch((e) =>
+    const dataReady = Promise.all([reloadEntries(), reloadTasks(), reloadProjects()]).catch((e) =>
       say(`Base de données indisponible : ${e}`, "error"),
     );
     // Needs settings (provider) and data (categories, streaks).
@@ -314,6 +361,7 @@
         <div class="view anim-rise">
           {#if app.view === "dashboard"}<Dashboard />
           {:else if app.view === "tasks"}<Tasks />
+          {:else if app.view === "projects"}<Projects />
           {:else if app.view === "agenda"}<Agenda />
           {:else if app.view === "notes"}<Notes />
           {:else if app.view === "activity"}<Activity />

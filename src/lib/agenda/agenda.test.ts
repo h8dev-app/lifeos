@@ -21,8 +21,9 @@ describe("times", () => {
 describe("parseEventArgs", () => {
   it("appointment with date, time and place", () => {
     expect(parseEventArgs("Dentiste @demain 14h30 *Cabinet_Dupont", "event", now)).toEqual({
-      title: "Dentiste", day: "2026-11-27", allDay: false, start: 870, end: 930, location: "Cabinet Dupont",
+      title: "Dentiste", day: "2026-11-27", allDay: false, start: 870, end: 930, location: "Cabinet Dupont", project: null,
     });
+    expect(parseEventArgs("Point client 10h +lifeos", "event", now)).toMatchObject({ title: "Point client", project: "lifeos" });
   });
   it("time range", () => {
     expect(parseEventArgs("Réunion projet 9h-10h30 @lundi", "event", now)).toMatchObject({
@@ -73,7 +74,7 @@ describe("layoutDay", () => {
 
 const ev = (o: Partial<AgendaEvent>): AgendaEvent => ({
   id: "x", title: "x", kind: "event", day: "2026-11-26", allDay: false, startAt: atMinutes("2026-11-26", 600),
-  endAt: null, location: null, description: null, remindMinutes: 15, remindedAt: null, noteId: null, ...o,
+  endAt: null, location: null, description: null, remindMinutes: 15, remindedAt: null, noteId: null, projectId: null, ...o,
 });
 
 describe("reminders", () => {

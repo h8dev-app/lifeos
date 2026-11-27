@@ -31,7 +31,7 @@ describe("registry", () => {
     expect(matchCommands("t", cmds)[0].name).toBe("tache");
     expect(matchCommands("tâ", cmds)[0].name).toBe("tache");
     expect(matchCommands("aide", cmds)[0].name).toBe("help");
-    expect(matchCommands("r", cmds).map((c) => c.name)).toEqual(["rdv", "sport", "lecture"]);
+    expect(matchCommands("r", cmds).map((c) => c.name)).toEqual(["rdv", "sport", "lecture", "projet"]);
     expect(matchCommands("agenda", cmds).map((c) => c.name)).toEqual(["rdv"]);
     expect(matchCommands("", cmds)).toHaveLength(cmds.length);
     expect(findCommand("Tâche", cmds)?.name).toBe("tache");
@@ -55,6 +55,8 @@ describe("registry", () => {
     expect(tokenSuggestions(tache, "@ve", data).map((s) => s.insert)).toEqual(["@vendredi"]);
     expect(tokenSuggestions(findCommand("note", cmds), "#b", data).map((s) => s.insert)).toEqual(["#Bilans"]);
     expect(tokenSuggestions(findCommand("memo", cmds), "!h", data)).toEqual([]); // no priority for memos
+    const withProjects = { ...data, projects: [{ slug: "lifeos", name: "LifeOS" }, { slug: "bts", name: "BTS" }] };
+    expect(tokenSuggestions(tache, "+l", withProjects).map((s) => s.insert)).toEqual(["+lifeos"]);
     expect(tokenSuggestions(tache, "réviser", data)).toEqual([]);
   });
 });

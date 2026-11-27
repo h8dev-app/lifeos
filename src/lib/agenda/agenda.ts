@@ -19,6 +19,7 @@ export interface AgendaEvent {
   remindMinutes: number | null;
   remindedAt: string | null;
   noteId: string | null;
+  projectId: string | null;
 }
 
 // ------------------------------------------------------------- times
@@ -57,12 +58,15 @@ export interface ParsedEvent {
   start: number | null; // minutes
   end: number | null;
   location: string | null;
+  /** Word after `+`, to look up among the projects. */
+  project: string | null;
 }
 
 /**
  * `/rdv Dentiste @demain 14h30` · `/rdv Réunion @lundi 9h-10h30 *Salle B12`
  * `/memo payer le loyer @vendredi` · `/memo appeler maman 18h`
  * - `@date`: day (default today); a time or `9h-10h30` range anywhere;
+ * - `+projet`: linked project;
  * - `*lieu` (underscores = spaces) for appointments;
  * - appointments need a time unless written `@date` only for a memo.
  */
@@ -71,6 +75,7 @@ export function parseEventArgs(args: string, kind: EventKind, now = new Date()):
   let start: number | null = null;
   let end: number | null = null;
   let location: string | null = null;
+  let project: string | null = null;
   const words: string[] = [];
 
   for (const token of args.trim().split(/\s+/).filter(Boolean)) {
@@ -78,6 +83,10 @@ export function parseEventArgs(args: string, kind: EventKind, now = new Date()):
       const d = parseDateWord(token.slice(1), now);
       if (!d) return { error: `Date « ${token} » non comprise (ex. @demain, @lundi, @28/11).` };
       day = d;
+      continue;
+    }
+    if (token.startsWith("+") && token.length > 1) {
+      project = token.slice(1);
       continue;
     }
     if (token.startsWith("*") && token.length > 1) {
@@ -108,7 +117,7 @@ export function parseEventArgs(args: string, kind: EventKind, now = new Date()):
   }
   if (kind === "event" && start === null) return { error: "Donne une heure au rendez-vous (ex. 14h30 ou 9h-10h)." };
   if (start !== null && end === null && kind === "event") end = Math.min(start + 60, 24 * 60 - 1); // 1 h by default
-  return { title, day: day ?? toLocalDate(now), allDay: start === null, start, end, location };
+  return { title, day: day ?? toLocalDate(now), allDay: start === null, start, end, location, project };
 }
 
 // ------------------------------------------------------------- grids

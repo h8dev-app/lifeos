@@ -15,6 +15,7 @@ interface EventRow {
   remind_minutes: number | null;
   reminded_at: string | null;
   note_id: string | null;
+  project_id: string | null;
 }
 
 const toEvent = (r: EventRow): AgendaEvent => ({
@@ -30,6 +31,7 @@ const toEvent = (r: EventRow): AgendaEvent => ({
   remindMinutes: r.remind_minutes,
   remindedAt: r.reminded_at,
   noteId: r.note_id,
+  projectId: r.project_id,
 });
 
 export type EventInput = Omit<AgendaEvent, "id" | "remindedAt">;
@@ -51,10 +53,10 @@ export async function createEvent(e: EventInput): Promise<string> {
   const now = nowIso();
   await db.execute(
     `INSERT INTO events (id, title, kind, day, all_day, start_at, end_at, location, description,
-       remind_minutes, note_id, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)`,
+       remind_minutes, note_id, project_id, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13)`,
     [id, e.title, e.kind, e.day, e.allDay ? 1 : 0, e.startAt, e.endAt, e.location, e.description,
-     e.remindMinutes, e.noteId, now],
+     e.remindMinutes, e.noteId, e.projectId, now],
   );
   return id;
 }
@@ -64,10 +66,11 @@ export async function updateEvent(id: string, e: EventInput): Promise<void> {
   const db = await getDb();
   await db.execute(
     `UPDATE events SET title = $1, kind = $2, day = $3, all_day = $4, start_at = $5, end_at = $6,
-       location = $7, description = $8, remind_minutes = $9, note_id = $10, reminded_at = NULL, updated_at = $11
-     WHERE id = $12`,
+       location = $7, description = $8, remind_minutes = $9, note_id = $10, project_id = $11, reminded_at = NULL,
+       updated_at = $12
+     WHERE id = $13`,
     [e.title, e.kind, e.day, e.allDay ? 1 : 0, e.startAt, e.endAt, e.location, e.description,
-     e.remindMinutes, e.noteId, nowIso(), id],
+     e.remindMinutes, e.noteId, e.projectId, nowIso(), id],
   );
 }
 
@@ -116,4 +119,15 @@ export async function listNotesTouchedBetween(fromIso: string, toIso: string) {
      WHERE deleted_at IS NULL AND ((updated_at >= $1 AND updated_at < $2) OR (created_at >= $1 AND created_at < $2))`,
     [fromIso, toIso],
   );
+}
+
+/** Upcoming items of a project, from `fromDay` on. */
+export async function listProjectEvents(projectId: string, fromDay: string, limit = 8): Promise<AgendaEvent[]> {
+  const db = await getDb();
+  const rows = await db.select<EventRow[]>(
+    `SELECT * FROM events WHERE deleted_at IS NULL AND project_id = $1 AND day >= $2
+     ORDER BY day, all_day DESC, start_at LIMIT $3`,
+    [projectId, fromDay, limit],
+  );
+  return rows.map(toEvent);
 }

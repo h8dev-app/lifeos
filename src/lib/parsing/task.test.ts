@@ -27,13 +27,14 @@ describe("parseDateWord", () => {
 
 describe("parseTaskArgs", () => {
   it("title only", () =>
-    expect(parseTaskArgs("réviser BTS", now)).toEqual({ title: "réviser BTS", dueDate: null, category: null, priority: null }));
+    expect(parseTaskArgs("réviser BTS", now)).toEqual({ title: "réviser BTS", dueDate: null, category: null, priority: null, project: null }));
   it("due date anywhere", () =>
-    expect(parseTaskArgs("rendre @vendredi le dossier", now)).toEqual({ title: "rendre le dossier", dueDate: "2026-11-27", category: null, priority: null }));
+    expect(parseTaskArgs("rendre @vendredi le dossier", now)).toEqual({ title: "rendre le dossier", dueDate: "2026-11-27", category: null, priority: null, project: null }));
   it("category and priority", () =>
     expect(parseTaskArgs("rendre #Projet_BTS le dossier !haute @demain", now)).toEqual({
-      title: "rendre le dossier", dueDate: "2026-11-26", category: "Projet BTS", priority: 1,
+      title: "rendre le dossier", dueDate: "2026-11-26", category: "Projet BTS", priority: 1, project: null,
     }));
+  it("project", () => expect(parseTaskArgs("corriger le login +lifeos", now)).toMatchObject({ title: "corriger le login", project: "lifeos" }));
   it("priority aliases", () => {
     for (const [w, p] of [["!1", 1], ["!urgent", 1], ["!moyenne", 2], ["!Basse", 3]] as const) {
       expect(parseTaskArgs(`x ${w}`, now)).toMatchObject({ priority: p });

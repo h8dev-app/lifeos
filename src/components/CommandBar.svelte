@@ -16,7 +16,7 @@
   }: {
     onsubmit?: (text: string) => boolean | Promise<boolean>;
     commands: CommandDef[];
-    tokenData: { taskCategories: string[]; noteFolders: string[] };
+    tokenData: { taskCategories: string[]; noteFolders: string[]; projects: { slug: string; name: string }[] };
     onhelp: () => void;
   } = $props();
 

@@ -3,7 +3,7 @@
   import { onMount } from "svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import Terminal from "../components/Terminal.svelte";
-  import { app } from "../lib/app.svelte";
+  import { app, say } from "../lib/app.svelte";
   import { CLAUDE_INSTALL_URL, claudeInstalled } from "../lib/pty";
 
   // Claude Code panel: the official CLI, interactive, typed by the user.
@@ -18,6 +18,16 @@
   // Focus the terminal each time the panel becomes visible.
   $effect(() => {
     if (app.view === "claude" && app.claude.running) queueMicrotask(() => terminal?.focus());
+  });
+
+  // A project asked for a session in its folder.
+  $effect(() => {
+    const req = app.claude.request;
+    if (!req) return;
+    app.claude.request = null;
+    folder = req;
+    if (app.claude.running) say(`Une session tourne déjà dans ${app.claude.cwd ?? "~/projets"}. Ferme-la pour la relancer dans ${req}.`);
+    else start();
   });
 
   function start() {

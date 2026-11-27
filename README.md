@@ -38,6 +38,8 @@ Tape `/` dans la barre : la liste des commandes s'affiche (↑ ↓, `Tab` ou `En
 | `/devoirs maths 45min exercices p.12` | matière, durée, note |
 | `/cat lecture icone:book-open livre:texte pages:nombre` | crée la catégorie `/lecture` (icône [Lucide](https://lucide.dev)) |
 | `/tache rendre le dossier #Cours !haute @vendredi` | tâche (catégorie, priorité `!haute`/`!moyenne`/`!basse` et échéance optionnelles) |
+| `/projet LifeOS @31/12` | crée le projet (ou l'ouvre s'il existe) ; `/projet` seul ouvre l'onglet Projets |
+| `/tache corriger le login +lifeos` | tâche rattachée au projet `lifeos` (aussi `/rdv … +lifeos`, `/memo … +lifeos`) |
 | `/note Réunion BTS #Cours` | crée la note dans la catégorie Cours et l'ouvre (`/note` seul ouvre la vue Notes) |
 | `/rdv Dentiste @demain 14h30 *Cabinet_Dupont` | rendez-vous (heure ou plage `9h-10h30`, lieu `*…` optionnel) |
 | `/memo payer le loyer @vendredi` | pense-bête sur la journée (ou à une heure : `/memo appeler maman 18h`) |
@@ -228,3 +230,7 @@ Icônes : [Lucide](https://lucide.dev) (licence ISC).
 Un bloc de l'accueil (agenda, tâches, horloge…) peut rester affiché en petite fenêtre, toujours au premier plan, pendant que LifeOS est masqué : bouton « épingler » en haut à droite du bloc, ou Réglages → Widgets d'écran. On le déplace par son titre, on le redimensionne par le coin ; sa place est gardée. Les widgets se cachent quand l'overlay s'ouvre.
 
 Sous GNOME Wayland, chaque widget tourne dans son propre processus via XWayland : Wayland ne permet pas à une appli de garder une fenêtre au premier plan ni de choisir sa position.
+
+## Projets
+
+Onglet Projets (Ctrl+3) : une carte par projet (avancement, jalon suivant, tâches en retard, temps passé sur 7 jours). La fiche d'un projet regroupe ses jalons, ses tâches, ses rendez-vous, ses notes (un dossier de Notes par projet), le temps passé (fenêtres ActivityWatch dont le titre contient un mot-clé du projet), les derniers commits de son dépôt GitHub, et un bouton qui ouvre Claude dans son dossier.

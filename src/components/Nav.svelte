@@ -6,6 +6,7 @@
   const TABS: { view: View; label: string; icon: IconName }[] = [
     { view: "dashboard", label: "Accueil", icon: "house" },
     { view: "tasks", label: "Tâches", icon: "list-checks" },
+    { view: "projects", label: "Projets", icon: "briefcase" },
     { view: "agenda", label: "Agenda", icon: "calendar" },
     { view: "notes", label: "Notes", icon: "notebook-pen" },
     { view: "activity", label: "Activité", icon: "activity" },

@@ -29,39 +29,50 @@ export interface CommandDef {
   color?: string | null;
 }
 
+const PROJECT: ParamDef = { token: "+projet", prefix: "+", desc: "projet lié (voir l'onglet Projets)" };
+
 const DATE: ParamDef = { token: "@date", prefix: "@", desc: "@auj, @demain, @après-demain, @lundi…@dimanche, @28/11, @28/11/2026" };
 
 export const BUILTIN_COMMANDS: CommandDef[] = [
   {
     name: "tache", aliases: ["tâche", "todo"], group: "Organiser", icon: "square-check",
     summary: "Ajouter une tâche au kanban",
-    syntax: "/tache <titre> [#catégorie] [!priorité] [@échéance]",
+    syntax: "/tache <titre> [#catégorie] [!priorité] [@échéance] [+projet]",
     params: [
       { token: "<titre>", desc: "ce qu'il faut faire" },
       { token: "#catégorie", prefix: "#", desc: "catégorie de tâche (créée si besoin, _ = espace)" },
       { token: "!priorité", prefix: "!", desc: "!haute, !moyenne, !basse" },
       { ...DATE, token: "@échéance" },
+      PROJECT,
     ],
-    examples: ["/tache rendre le dossier #Cours !haute @vendredi", "/tache faire les courses"],
+    examples: ["/tache rendre le dossier #Cours !haute @vendredi", "/tache corriger le login +lifeos", "/tache faire les courses"],
   },
   {
     name: "rdv", group: "Organiser", icon: "calendar",
     summary: "Ajouter un rendez-vous à l'agenda",
-    syntax: "/rdv <titre> [@date] <heure | 9h-10h30> [*lieu]",
+    syntax: "/rdv <titre> [@date] <heure | 9h-10h30> [*lieu] [+projet]",
     params: [
       { token: "<titre>", desc: "nom du rendez-vous" },
       DATE,
       { token: "<heure>", desc: "14h30, 9h, 14:30 ou une plage 9h-10h30 (1 h par défaut)" },
       { token: "*lieu", prefix: "*", desc: "lieu (_ = espace), optionnel" },
+      PROJECT,
     ],
     examples: ["/rdv Dentiste @demain 14h30 *Cabinet_Dupont", "/rdv Réunion projet @lundi 9h-10h30"],
   },
   {
     name: "memo", aliases: ["mémo", "pensebete"], group: "Organiser", icon: "pin",
     summary: "Ajouter un pense-bête (rappel à 9 h ou à l'heure donnée)",
-    syntax: "/memo <texte> [@date] [heure]",
-    params: [{ token: "<texte>", desc: "ce qu'il ne faut pas oublier" }, DATE, { token: "[heure]", desc: "18h, 9h30… (sinon toute la journée)" }],
+    syntax: "/memo <texte> [@date] [heure] [+projet]",
+    params: [{ token: "<texte>", desc: "ce qu'il ne faut pas oublier" }, DATE, { token: "[heure]", desc: "18h, 9h30… (sinon toute la journée)" }, PROJECT],
     examples: ["/memo payer le loyer @vendredi", "/memo appeler maman 18h"],
+  },
+  {
+    name: "projet", aliases: ["projets"], group: "Organiser", icon: "briefcase", bare: true,
+    summary: "Créer un projet ou l'ouvrir (sans argument : la liste)",
+    syntax: "/projet [nom] [@échéance]",
+    params: [{ token: "[nom]", desc: "nom du projet (ouvert s'il existe déjà)" }, { ...DATE, token: "@échéance" }],
+    examples: ["/projet LifeOS", "/projet Rénovation cuisine @31/12", "/projet"],
   },
   {
     name: "note", group: "Organiser", icon: "notebook-pen", bare: true,
@@ -207,7 +218,7 @@ const PRIORITY_WORDS: Suggestion[] = [
 export function tokenSuggestions(
   command: CommandDef | undefined,
   token: string,
-  data: { taskCategories: string[]; noteFolders: string[] },
+  data: { taskCategories: string[]; noteFolders: string[]; projects?: { slug: string; name: string }[] },
 ): Suggestion[] {
   if (!command || !token) return [];
   const prefix = token[0];
@@ -216,6 +227,9 @@ export function tokenSuggestions(
   const keep = (list: Suggestion[]) => list.filter((s) => norm(s.insert.slice(1)).startsWith(typed) && s.insert !== token);
   if (prefix === "@") return keep(DATE_WORDS);
   if (prefix === "!") return keep(PRIORITY_WORDS);
+  if (prefix === "+") {
+    return keep((data.projects ?? []).map((p) => ({ insert: `+${p.slug}`, label: `+${p.slug}`, hint: p.name })));
+  }
   if (prefix === "#") {
     const names = command.name === "note" ? data.noteFolders : data.taskCategories;
     return keep(names.map((n) => ({ insert: `#${n.replace(/ /g, "_")}`, label: `#${n}` })));

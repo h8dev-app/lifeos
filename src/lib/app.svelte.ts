@@ -13,8 +13,10 @@ import { DEFAULT_SETTINGS, loadScreenWidgets, loadSettings, saveScreenWidgets, t
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { applyAppearance } from "./theme";
+import { listMilestones, listProjects } from "./db/projects";
+import type { Milestone, Project } from "./projects/projects";
 
-export type View = "dashboard" | "tasks" | "agenda" | "notes" | "activity" | "claude" | "settings";
+export type View = "dashboard" | "tasks" | "projects" | "agenda" | "notes" | "activity" | "claude" | "settings";
 
 /** Entry proposed by the AI, waiting for the user's confirmation. */
 export interface PendingEntry {
@@ -46,8 +48,14 @@ export const app = $state({
   help: null as string | null,
   /** Last GitHub sync result, shown in Settings and Activity. */
   github: null as GithubSyncState,
-  /** Claude panel: `session` changes to start a new terminal. */
-  claude: { cwd: null as string | null, running: false, session: 0, opened: false },
+  /** Claude panel: `session` changes to start a new terminal; `request` = start in that folder. */
+  claude: { cwd: null as string | null, running: false, session: 0, opened: false, request: null as string | null },
+  projects: [] as Project[],
+  milestones: [] as Milestone[],
+  /** Project to open when the Projects view shows (set by /projet). */
+  openProjectId: null as string | null,
+  /** Tasks view: show only this project ("" = all). */
+  taskProjectFilter: "",
   /** Widgets pinned on the screen (see src-tauri/src/widgets.rs). */
   screenWidgets: [] as string[],
 });
@@ -116,6 +124,12 @@ export async function runGithubSync(): Promise<void> {
   } catch (e) {
     app.github = { at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+export async function reloadProjects() {
+  const [projects, milestones] = await Promise.all([listProjects(), listMilestones()]);
+  app.projects = projects;
+  app.milestones = milestones;
 }
 
 export async function reloadNoteFolders() {

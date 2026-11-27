@@ -33,10 +33,12 @@
   let confirmBulkDelete = $state(false);
   let confirmCatDelete = $state<string | null>(null);
 
+  // Project filter (set from a project page too): "" = every task.
+  const byProject = $derived(app.taskProjectFilter ? app.tasks.filter((t) => t.projectId === app.taskProjectFilter) : app.tasks);
   const visible = $derived(
-    filter === ALL ? app.tasks
-    : filter === NONE ? app.tasks.filter((t) => !t.categoryId)
-    : app.tasks.filter((t) => t.categoryId === filter),
+    filter === ALL ? byProject
+    : filter === NONE ? byProject.filter((t) => !t.categoryId)
+    : byProject.filter((t) => t.categoryId === filter),
   );
   const columns = $derived(groupByStatus(visible));
   const selecting = $derived(selected.size > 0);
@@ -123,10 +125,15 @@
     await run(async () => {
       const categoryId = await categoryIdOf(f);
       if (task) {
-        await updateTask(task.id, { title: f.title, dueDate: f.dueDate, categoryId, priority: f.priority });
+        await updateTask(task.id, {
+          title: f.title, dueDate: f.dueDate, categoryId, priority: f.priority, projectId: f.projectId, milestoneId: f.milestoneId,
+        });
         if (f.status !== task.status) await setTasksStatus([task.id], f.status);
       } else if (status) {
-        await addTask({ title: f.title, dueDate: f.dueDate, categoryId, priority: f.priority, status: f.status });
+        await addTask({
+          title: f.title, dueDate: f.dueDate, categoryId, priority: f.priority, status: f.status,
+          projectId: f.projectId, milestoneId: f.milestoneId,
+        });
       }
     });
   }
@@ -184,6 +191,12 @@
       <button class="chip add" onclick={() => (newCatMode = true)}><Icon name="plus" size={13} /> Catégorie</button>
     {/if}
     <span class="grow"></span>
+    {#if app.projects.length}
+      <Select label="Projet" bind:value={app.taskProjectFilter} options={[
+        { value: "", label: "Tous les projets" },
+        ...app.projects.map((p) => ({ value: p.id, label: p.name, color: p.color })),
+      ]} />
+    {/if}
     <button class="new" onclick={() => (creating = "todo")}><Icon name="plus" size={15} /> Nouvelle tâche</button>
   </div>
 
@@ -244,6 +257,7 @@
   <TaskDialog task={editing} onsave={saveForm} ondelete={deleteEditing} oncancel={() => (editing = null)} />
 {:else if creating}
   <TaskDialog defaultStatus={creating} defaultCategoryId={filter === ALL || filter === NONE ? null : filter}
+    defaultProjectId={app.taskProjectFilter || null}
     onsave={saveForm} oncancel={() => (creating = null)} />
 {/if}
 

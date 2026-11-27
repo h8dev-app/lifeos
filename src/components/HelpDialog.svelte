@@ -38,7 +38,7 @@
     ["Ctrl+Alt+Espace", "afficher / masquer LifeOS"],
     ["Échap", "fermer (une liste, une fenêtre, une note, puis l'overlay)"],
     ["Maj+Échap", "fermer l'overlay directement (utile dans le terminal Claude)"],
-    ["Ctrl+1 … Ctrl+7", "Accueil, Tâches, Agenda, Notes, Activité, Claude, Réglages"],
+    ["Ctrl+1 … Ctrl+8", "Accueil, Tâches, Projets, Agenda, Notes, Activité, Claude, Réglages"],
     ["/ puis Tab", "compléter une commande"],
     ["↑ ↓ (barre vide)", "rappeler les saisies précédentes"],
     ["Ctrl+E", "aperçu Markdown dans une note"],

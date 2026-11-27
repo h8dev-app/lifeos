@@ -61,6 +61,7 @@ export const ICON_NAMES = [
   "tag",
   "search",
   "key-round",
+  "flag",
   "grip-horizontal",
   "maximize-2",
   "picture-in-picture-2",

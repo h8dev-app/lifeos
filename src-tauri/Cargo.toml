@@ -1,6 +1,6 @@
 [package]
 name = "lifeos"
-version = "0.9.0"
+version = "0.10.0"
 description = "LifeOS - local-first life tracker overlay"
 authors = ["Henri"]
 edition = "2024"

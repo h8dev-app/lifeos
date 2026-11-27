@@ -19,6 +19,7 @@
   } = $props();
 
   const category = $derived(app.taskCategories.find((c) => c.id === task.categoryId));
+  const project = $derived(app.projects.find((p) => p.id === task.projectId));
   const done = $derived(task.status === "done");
   const late = $derived(!done && task.dueDate !== null && task.dueDate < today());
   const later = $derived(!done && task.plannedFor !== null && task.plannedFor > today());
@@ -41,8 +42,9 @@
       onclick={(e) => { e.stopPropagation(); oncycle(); }}><span class="pdot" style:background={prio.color}></span></button>
     <span class="title">{task.title}</span>
   </div>
-  {#if category || task.dueDate || later}
+  {#if category || project || task.dueDate || later}
     <div class="meta">
+      {#if project}<span class="tag" style:color={project.color}>+{project.slug}</span>{/if}
       {#if category}<span class="tag" style:color={category.color}>#{category.name}</span>{/if}
       {#if task.dueDate}<span class:late><Icon name="alarm-clock" size={12} /> {formatDay(task.dueDate)}</span>{/if}
       {#if later}<span title="Reportée"><Icon name="calendar-clock" size={12} /> {task.plannedFor === addDays(today(), 1) ? "demain" : formatDay(task.plannedFor!)}</span>{/if}
