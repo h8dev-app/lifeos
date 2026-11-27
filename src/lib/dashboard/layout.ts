@@ -10,7 +10,7 @@ import type { IconName } from "../ui/iconNames";
 
 export type BlockType =
   | "clock" | "agenda" | "tasks" | "project" | "projects" | "notes" | "note" | "memo"
-  | "streaks" | "entries" | "activity";
+  | "streaks" | "entries" | "activity" | "stats";
 
 export type BlockOptions = Record<string, string | boolean>;
 
@@ -88,6 +88,10 @@ export const BLOCK_TYPES: Record<BlockType, BlockTypeDef> = {
   entries: {
     label: "Journal des habitudes", desc: "Tes dernières saisies (/sport, /cuisine…), d'une habitude ou de toutes.", icon: "book-open",
     minW: 240, minH: 120, size: { w: 0.32, h: 0.35 }, defaults: { category: "" },
+  },
+  stats: {
+    label: "Statistiques", desc: "Tâches faites, saisies et temps d'écran sur 7 ou 30 jours, comparés à la période d'avant.",
+    icon: "chart-column", minW: 240, minH: 160, size: { w: 0.34, h: 0.5 }, defaults: { period: "week" },
   },
   activity: {
     label: "Temps d'écran", desc: "Les applis les plus utilisées aujourd'hui (ActivityWatch).", icon: "activity",

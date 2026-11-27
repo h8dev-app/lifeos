@@ -13,6 +13,23 @@
     "core:window:allow-set-size",
     "sql:default",
     "sql:allow-execute",
-    "store:default"
+    "store:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$APPDATA/notes"
+        },
+        {
+          "path": "$APPDATA/notes/**"
+        }
+      ]
+    },
+    "fs:allow-exists",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-stat"
   ]
 }

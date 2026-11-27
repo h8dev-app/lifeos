@@ -43,6 +43,8 @@ fn run_widget(mut context: tauri::Context, kind: String) {
     context.config_mut().app.windows.clear();
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
+        // A pinned note can be edited in its widget (scope: capabilities/widget.json).
+        .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![
             db::db_url,
             local_fetch::local_fetch,

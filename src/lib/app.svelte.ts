@@ -10,8 +10,10 @@ import { listTaskCategories, listTasks, type Task, type TaskCategory } from "./d
 import type { Category, EntryData } from "./types";
 import { syncGithub, type GithubSyncState } from "./activity/sync";
 import {
-  DEFAULT_SETTINGS, loadDashboardLayout, loadScreenWidgets, loadSettings, saveDashboardLayout, saveScreenWidgets, type Settings,
+  DEFAULT_SETTINGS, isBlocksImported, loadDashboardLayout, loadScreenWidgets, loadSettings, markBlocksImported,
+  saveScreenWidgets, type Settings,
 } from "./settings";
+import { countBlocks, listBlocks, saveBlockContent, saveLayout } from "./db/blocks";
 import { defaultLayout, normalizeLayout, type Block } from "./dashboard/layout";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -67,17 +69,31 @@ export const app = $state({
 
 // ------------------------------------------------------------ home blocks
 
+/**
+ * Home blocks from SQLite. The first time, the layout saved by older
+ * versions (settings.json) is imported, or the default one.
+ */
 export async function loadBlocks(): Promise<void> {
-  const raw = await loadDashboardLayout();
-  if (raw !== undefined && raw !== null) app.blocks = normalizeLayout(raw);
+  if ((await countBlocks()) === 0 && !(await isBlocksImported())) {
+    const raw = await loadDashboardLayout();
+    await saveLayout(raw !== undefined && raw !== null ? normalizeLayout(raw) : defaultLayout());
+    await markBlocksImported();
+  }
+  app.blocks = await listBlocks();
 }
 
-/** Save the home blocks; a deleted block that was pinned on the screen is unpinned. */
+/** Save positions, sizes, order, added and removed blocks. A removed block pinned on the screen is unpinned. */
 export async function saveBlocks(next: Block[]): Promise<void> {
   const gone = app.blocks.filter((b) => !next.some((n) => n.id === b.id)).map((b) => b.id);
   app.blocks = next;
-  await guard(() => saveDashboardLayout($state.snapshot(next)));
+  await guard(() => saveLayout($state.snapshot(next) as Block[]));
   for (const id of gone) if (app.screenWidgets.includes(id)) await toggleScreenWidget(id);
+}
+
+/** Save the title and options of one block (its settings, the post-it text). */
+export async function saveBlock(b: Block): Promise<void> {
+  app.blocks = app.blocks.map((x) => (x.id === b.id ? b : x));
+  await guard(() => saveBlockContent(b.id, b.title, $state.snapshot(b.options) as Block["options"]));
 }
 
 // ------------------------------------------------------------ screen widgets

@@ -10,7 +10,8 @@
   let { block, onsave, ondelete, oncancel }: {
     block: Block;
     onsave: (b: Block) => void;
-    ondelete: () => void;
+    /** Absent in a screen widget (blocks are deleted from the home screen). */
+    ondelete?: () => void;
     oncancel: () => void;
   } = $props();
 
@@ -113,6 +114,13 @@
           <textarea rows="5" value={s("text")} oninput={(e) => set("text")(e.currentTarget.value)}></textarea>
         </label>
         <p class="hint">Tu peux aussi écrire directement dans le bloc.</p>
+      {:else if src.type === "stats"}
+        <div class="field"><span class="label">Période</span>
+          <Select label="Période" value={s("period") || "week"} onchange={set("period")} options={[
+            { value: "week", label: "Les 7 derniers jours" },
+            { value: "month", label: "Les 30 derniers jours" },
+          ]} />
+        </div>
       {:else if src.type === "entries"}
         <div class="field"><span class="label">Habitude</span>
           <Select label="Habitude" value={s("category")} onchange={set("category")} options={[
@@ -122,11 +130,24 @@
         </div>
       {/if}
 
+      <div class="field"><span class="label">Opacité une fois épinglé sur l'écran</span>
+        <Select label="Opacité du widget" value={s("screenOpacity")} onchange={set("screenOpacity")} options={[
+          { value: "", label: "Comme les panneaux (Réglages → Apparence)" },
+          { value: "1", label: "100 % (opaque)" },
+          { value: "0.85", label: "85 %" },
+          { value: "0.7", label: "70 %" },
+          { value: "0.55", label: "55 %" },
+          { value: "0.4", label: "40 % (très transparent)" },
+        ]} />
+      </div>
+
       <div class="actions">
-        {#if confirmDelete}
-          <button type="button" class="danger" onclick={ondelete}>Confirmer la suppression</button>
-        {:else}
-          <button type="button" class="ghost" onclick={() => (confirmDelete = true)}><Icon name="trash-2" size={14} /> Supprimer le bloc</button>
+        {#if ondelete}
+          {#if confirmDelete}
+            <button type="button" class="danger" onclick={ondelete}>Confirmer la suppression</button>
+          {:else}
+            <button type="button" class="ghost" onclick={() => (confirmDelete = true)}><Icon name="trash-2" size={14} /> Supprimer le bloc</button>
+          {/if}
         {/if}
         <span class="grow"></span>
         <button type="button" onclick={oncancel}>Annuler</button>

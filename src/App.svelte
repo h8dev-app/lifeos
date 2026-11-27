@@ -41,6 +41,7 @@
   import { parseTaskArgs } from "./lib/parsing/task";
   import { formatEntryData } from "./lib/format";
   import { formatDay, parseDateWord } from "./lib/dates";
+  import { parseTabs } from "./lib/ui/tabs";
 
   let bar: CommandBar;
   const commands = $derived(allCommands(app.categories));
@@ -282,7 +283,8 @@
   // Once the Claude panel has been shown, keep it mounted (session survives).
   $effect(() => { if (app.view === "claude") app.claude.opened = true; });
 
-  const VIEWS: View[] = ["dashboard", "tasks", "projects", "agenda", "notes", "activity", "claude", "settings"];
+  // Ctrl+1…8 follow the visible tabs (Réglages → Onglets).
+  const VIEWS = $derived<View[]>(parseTabs(app.settings.tabs));
 
   function onKeydown(e: KeyboardEvent) {
     // Inside the terminal, Escape belongs to Claude (it interrupts it).
@@ -296,7 +298,8 @@
       else if (e.shiftKey || !consumeEscape()) closeOverlay();
     } else if ((e.ctrlKey || e.metaKey) && ["1", "2", "3", "4", "5", "6", "7", "8"].includes(e.key)) {
       e.preventDefault();
-      app.view = VIEWS[Number(e.key) - 1];
+      const v = VIEWS[Number(e.key) - 1];
+      if (v) app.view = v;
     }
   }
 
@@ -322,6 +325,7 @@
     const unlisten = onOverlayShown(() => {
       say("");
       wallpaper(); // it may have changed while hidden
+      loadBlocks().catch(() => {}); // a screen widget may have changed a block
       reloadTasks(); // the day may have changed while hidden
       autoReview(); // a new week may have started while LifeOS kept running
       if (app.view === "claude") document.querySelector<HTMLElement>(".xterm-helper-textarea")?.focus();

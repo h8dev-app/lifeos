@@ -4,7 +4,7 @@
   import BlockContent from "../components/BlockContent.svelte";
   import BlockDialog from "../components/BlockDialog.svelte";
   import BlockCatalog from "../components/BlockCatalog.svelte";
-  import { app, saveBlocks, toggleScreenWidget } from "../lib/app.svelte";
+  import { app, saveBlock, saveBlocks, toggleScreenWidget } from "../lib/app.svelte";
   import { onEscape } from "../lib/overlay";
   import {
     addBlock, blockTitle, BLOCK_TYPES, bringToFront, clampRect, defaultLayout, dragRect, newBlockId, readingOrder,
@@ -155,7 +155,7 @@
             {/if}
           </div>
           <div class="body">
-            <BlockContent block={b} onoptions={(options) => commit(app.blocks.map((x) => (x.id === b.id ? { ...x, options } : x)))} />
+            <BlockContent block={b} onoptions={(options) => saveBlock({ ...b, options })} />
           </div>
           {#if editing}
             {#each ["e", "s", "se"] as const as h (h)}
@@ -175,7 +175,7 @@
 {/if}
 {#if settingsOf}
   <BlockDialog block={settingsOf}
-    onsave={(b) => { settingsOf = null; commit(app.blocks.map((x) => (x.id === b.id ? b : x))); }}
+    onsave={(b) => { settingsOf = null; saveBlock(b); }}
     ondelete={() => { const id = settingsOf!.id; settingsOf = null; commit(removeBlock(app.blocks, id)); }}
     oncancel={() => (settingsOf = null)} />
 {/if}

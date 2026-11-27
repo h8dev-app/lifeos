@@ -5,7 +5,7 @@
   import { totalSeconds, totalsByApp } from "../lib/activity/aggregate";
   import { formatSeconds } from "../lib/activity/timeline";
 
-  // Today's active time per app (top 5). Refreshed every 5 minutes.
+  // Today's active time per app (top 5). Refreshed every minute.
   let { bare = false }: { bare?: boolean } = $props();
   let aw = $state<AwDay | null>(null);
 
@@ -16,7 +16,7 @@
 
   onMount(() => {
     load();
-    const t = setInterval(load, 5 * 60_000);
+    const t = setInterval(load, 60_000);
     return () => clearInterval(t);
   });
 

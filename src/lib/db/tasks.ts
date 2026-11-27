@@ -210,3 +210,13 @@ export async function listOpenTasks(): Promise<Task[]> {
   );
   return rows.map(toTask);
 }
+
+/** `done_at` of the tasks finished in `[fromIso, toIso)` (statistics). */
+export async function listTaskDoneTimes(fromIso: string, toIso: string): Promise<string[]> {
+  const db = await getDb();
+  const rows = await db.select<{ done_at: string }[]>(
+    "SELECT done_at FROM tasks WHERE deleted_at IS NULL AND done_at >= $1 AND done_at < $2",
+    [fromIso, toIso],
+  );
+  return rows.map((r) => r.done_at);
+}

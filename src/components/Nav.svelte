@@ -1,18 +1,10 @@
 <script lang="ts">
   import { app, type View } from "../lib/app.svelte";
   import Icon from "./Icon.svelte";
-  import type { IconName } from "../lib/ui/iconNames";
+  import { ALL_TABS, parseTabs } from "../lib/ui/tabs";
 
-  const TABS: { view: View; label: string; icon: IconName }[] = [
-    { view: "dashboard", label: "Accueil", icon: "house" },
-    { view: "tasks", label: "Tâches", icon: "list-checks" },
-    { view: "projects", label: "Projets", icon: "briefcase" },
-    { view: "agenda", label: "Agenda", icon: "calendar" },
-    { view: "notes", label: "Notes", icon: "notebook-pen" },
-    { view: "activity", label: "Activité", icon: "activity" },
-    { view: "claude", label: "Claude", icon: "square-terminal" },
-    { view: "settings", label: "Réglages", icon: "settings" },
-  ];
+  // Visible tabs, chosen in Réglages → Onglets.
+  const TABS = $derived(parseTabs(app.settings.tabs).map((v) => ALL_TABS.find((t) => t.view === v)!));
 
   // Sliding pill under the active tab: measured from the button itself.
   let buttons: HTMLButtonElement[] = $state([]);
@@ -26,7 +18,8 @@
 
   $effect(() => {
     void app.view;
-    measure();
+    void TABS;
+    queueMicrotask(measure);
     if (!ready) requestAnimationFrame(() => (ready = true));
   });
 </script>

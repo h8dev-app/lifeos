@@ -139,6 +139,8 @@ fn sync_visibility(app: &AppHandle) {
     if READY.load(Ordering::Relaxed) && !OVERLAY_VISIBLE.load(Ordering::Relaxed) {
         let _ = window.show();
         let _ = window.set_always_on_top(true);
+        // The page re-reads its block and data (they may have changed in LifeOS).
+        let _ = window.emit("widget://shown", ());
     } else {
         let _ = window.hide();
     }

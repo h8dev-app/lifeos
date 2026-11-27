@@ -8,10 +8,13 @@
   import Streaks from "./Streaks.svelte";
   import ActivitySummary from "./ActivitySummary.svelte";
   import AgendaToday from "./AgendaToday.svelte";
-  import { app, guard, reloadEntries, say } from "../lib/app.svelte";
+  import StatsBlock from "./StatsBlock.svelte";
+  import { app, guard, reloadEntries, reloadTasks, say } from "../lib/app.svelte";
   import { deleteEntry, listRecentEntries, type RecentEntry } from "../lib/db/entries";
-  import { listProjectTasks, type Task } from "../lib/db/tasks";
-  import { listNotes, readNoteBody, type NoteMeta } from "../lib/db/notes";
+  import { addTask, ensureTaskCategory, listProjectTasks, type Task } from "../lib/db/tasks";
+  import { listNotes, readNoteBody, saveNote, type NoteMeta } from "../lib/db/notes";
+  import { parseTaskArgs } from "../lib/parsing/task";
+  import { findProject } from "../lib/projects/projects";
   import { formatDate, formatTime } from "../lib/clock";
   import { formatDay, startOfDayIso, today } from "../lib/dates";
   import { blockTitle, type Block, type BlockOptions } from "../lib/dashboard/layout";
@@ -77,7 +80,9 @@
 
   // ------------------------------------------------------------ notes
   let notes = $state<NoteMeta[]>([]);
-  let pinned = $state<{ title: string; html: string } | null | undefined>(undefined);
+  let pinned = $state<{ title: string; body: string; html: string } | null | undefined>(undefined);
+  let editingNote = $state(false);
+  let noteText = $state("");
   $effect(() => {
     void app.agendaVersion; // bumped by the screen widgets' refresh
     if (block.type === "notes") {
@@ -87,10 +92,55 @@
       const id = str("note");
       if (!id) { pinned = null; return; }
       guard(() => readNoteBody(id)).then((n) => {
-        pinned = n ? { title: n.title, html: DOMPurify.sanitize(marked.parse(n.body, { async: false })) } : null;
+        if (editingNote) return; // do not replace what is being typed
+        pinned = n ? { title: n.title, body: n.body, html: DOMPurify.sanitize(marked.parse(n.body, { async: false })) } : null;
       });
     }
   });
+
+  // Pinned note: "Modifier" switches to the Markdown text, saved as you type.
+  let noteTimer: ReturnType<typeof setTimeout> | undefined;
+  function startEditNote() {
+    noteText = pinned?.body ?? "";
+    editingNote = true;
+  }
+  function typeNote(text: string) {
+    noteText = text;
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(() => saveNoteText(text), 600);
+  }
+  async function saveNoteText(text: string) {
+    const id = str("note");
+    await guard(async () => {
+      const meta = (await listNotes()).find((n) => n.id === id);
+      if (!meta) throw new Error("Note introuvable.");
+      await saveNote(meta, text);
+      pinned = { title: meta.title, body: text, html: DOMPurify.sanitize(marked.parse(text, { async: false })) };
+    });
+  }
+  async function stopEditNote() {
+    clearTimeout(noteTimer);
+    await saveNoteText(noteText);
+    editingNote = false;
+  }
+
+  // Tasks: quick add, with the block's project/category (and #, !, @, +).
+  let newTask = $state("");
+  async function quickAdd(e: SubmitEvent) {
+    e.preventDefault();
+    const parsed = parseTaskArgs(newTask);
+    if ("error" in parsed) { say(parsed.error, "error"); return; }
+    newTask = "";
+    await guard(async () => {
+      const project = parsed.project ? findProject(parsed.project, app.projects) : undefined;
+      const categoryId = parsed.category ? await ensureTaskCategory(parsed.category) : str("category") || null;
+      await addTask({
+        title: parsed.title, dueDate: parsed.dueDate, priority: parsed.priority ?? 2, categoryId,
+        projectId: project?.id ?? (str("project") || null),
+      });
+      await reloadTasks();
+    });
+  }
 
   function openNote(id: string) {
     app.openNoteId = id;
@@ -135,6 +185,10 @@
   <AgendaToday range={str("range") || "today"} bare />
 {:else if block.type === "tasks"}
   {#if tasks.length}<TaskList {tasks} compact />{:else}<p class="empty">{tasksEmpty}</p>{/if}
+  <form class="quick" onsubmit={quickAdd}>
+    <Icon name="plus" size={14} />
+    <input bind:value={newTask} placeholder="Ajouter une tâche… (#catégorie !haute @demain)" aria-label="Ajouter une tâche" />
+  </form>
 {:else if block.type === "project"}
   {#if !project}
     <p class="empty">Choisis un projet dans les réglages du bloc.</p>
@@ -183,8 +237,14 @@
   {#if pinned === null}
     <p class="empty">Choisis une note dans les réglages du bloc.</p>
   {:else if pinned}
-    <!-- Sanitized with DOMPurify. -->
-    <div class="md">{@html pinned.html}</div>
+    {#if editingNote}
+      <textarea class="memo note-edit" value={noteText} oninput={(e) => typeNote(e.currentTarget.value)}></textarea>
+      <button class="note-btn" onclick={stopEditNote}><Icon name="check" size={13} /> Terminé</button>
+    {:else}
+      <button class="note-btn" onclick={startEditNote} title="Écrire dans la note"><Icon name="notebook-pen" size={13} /> Modifier</button>
+      <!-- Sanitized with DOMPurify. -->
+      <div class="md">{@html pinned.html}</div>
+    {/if}
   {/if}
 {:else if block.type === "memo"}
   {#if editable}
@@ -198,6 +258,8 @@
   <RecentEntries {entries} categories={app.categories} ondelete={remove} bare />
 {:else if block.type === "activity"}
   <ActivitySummary bare />
+{:else if block.type === "stats"}
+  <StatsBlock period={str("period") === "month" ? "month" : "week"} />
 {/if}
 
 <style>
@@ -237,4 +299,16 @@
     color: var(--text); font: inherit; font-size: 15px; line-height: 1.5;
   }
   .memo-ro { margin: 0; white-space: pre-wrap; font-size: 15px; line-height: 1.5; }
+  .note-edit { font-family: var(--mono); font-size: 13px; min-height: 160px; height: calc(100% - 40px); }
+  .note-btn {
+    display: inline-flex; align-items: center; gap: 5px; float: right; margin: 0 0 6px 8px; padding: 3px 9px;
+    border-radius: 7px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); font-size: 12px;
+  }
+  .note-btn:hover { color: var(--text); }
+  .quick {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+    border: 1px dashed var(--border); color: var(--text-muted);
+  }
+  .quick:focus-within { border-style: solid; border-color: var(--accent); }
+  .quick input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--text); font: inherit; font-size: 13px; }
 </style>

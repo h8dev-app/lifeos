@@ -9,13 +9,17 @@
   import BlockContent from "./components/BlockContent.svelte";
   import Icon from "./components/Icon.svelte";
   import { app, reloadEntries, reloadProjects, reloadTasks } from "./lib/app.svelte";
-  import { loadDashboardLayout, loadSettings, reloadStoreFromDisk } from "./lib/settings";
+  import { listen } from "@tauri-apps/api/event";
+  import BlockDialog from "./components/BlockDialog.svelte";
+  import { loadSettings, reloadStoreFromDisk } from "./lib/settings";
   import { applyAppearance } from "./lib/theme";
-  import { blockTitle, normalizeLayout, type Block, type BlockType } from "./lib/dashboard/layout";
+  import { listBlocks, saveBlockContent } from "./lib/db/blocks";
+  import { blockTitle, type Block, type BlockType } from "./lib/dashboard/layout";
 
   const win = getCurrentWindow();
   const id = win.label.replace(/^widget-/, "");
   let block = $state<Block | null>(null);
+  let settings = $state(false);
 
   const VIEW: Partial<Record<BlockType, string>> = {
     agenda: "agenda", tasks: "tasks", project: "projects", projects: "projects", notes: "notes", note: "notes", activity: "activity",
@@ -29,16 +33,28 @@
   /** Block, theme and panel look as saved by the main window (re-read: they change). */
   async function refreshConfig(): Promise<boolean> {
     await reloadStoreFromDisk();
-    const [s, raw] = await Promise.all([loadSettings(), loadDashboardLayout()]);
-    applyAppearance({ style: s.style, theme: s.theme, accent: s.accent, panelOpacity: s.panelOpacity, glassBlur: 0 });
-    const found = normalizeLayout(raw ?? undefined).find((b) => b.id === id) ?? null;
+    const [s, blocks] = await Promise.all([loadSettings(), listBlocks()]);
+    const found = blocks.find((b) => b.id === id) ?? null;
+    // Opacity of this widget (block settings), else the panels' one.
+    const own = Number(found?.options.screenOpacity);
+    applyAppearance({
+      style: s.style, theme: s.theme, accent: s.accent, glassBlur: 0,
+      panelOpacity: Number.isFinite(own) && own > 0 ? own : s.panelOpacity,
+    });
     if (!found) {
       // The block was deleted from the home screen: close (and unpin) the widget.
       await invoke("widget_quit");
       return false;
     }
-    block = found;
+    if (!settings) block = found; // keep what the dialog shows
     return true;
+  }
+
+  /** Title, options, post-it text: saved in SQLite, read back by the home screen. */
+  async function saveContent(b: Block) {
+    block = b;
+    await saveBlockContent(b.id, b.title, $state.snapshot(b.options) as Block["options"]).catch((e) => console.error("widget save", e));
+    refreshConfig().catch(() => {});
   }
 
   async function refreshData() {
@@ -80,11 +96,17 @@
         await invoke("widget_ready");
       })
       .catch((e) => console.error("widget", e));
-    const t = setInterval(() => {
+    const refresh = () => {
       refreshConfig().catch(() => {});
       refreshData();
-    }, REFRESH_MS);
-    return () => clearInterval(t);
+    };
+    const t = setInterval(refresh, REFRESH_MS);
+    // Shown again (LifeOS was closed): changes may have been made there.
+    const un = listen("widget://shown", refresh);
+    return () => {
+      clearInterval(t);
+      un.then((f) => f());
+    };
   });
 </script>
 
@@ -95,16 +117,23 @@
     <button onclick={() => invoke("widget_open_app", { view: (block && VIEW[block.type]) ?? "dashboard" })} title="Ouvrir dans LifeOS" aria-label="Ouvrir dans LifeOS">
       <Icon name="maximize-2" size={13} />
     </button>
+    <button onclick={() => (settings = true)} title="Renommer, choisir le contenu, opacité" aria-label="Réglages du widget">
+      <Icon name="settings" size={13} />
+    </button>
     <button onclick={() => invoke("widget_quit")} title="Retirer de l'écran" aria-label="Retirer de l'écran">
       <Icon name="x" size={14} />
     </button>
   </header>
   <div class="body" class:clock={block?.type === "clock"}>
-    {#if block}<BlockContent {block} hideTitle editable={false} />{/if}
+    {#if block}<BlockContent {block} hideTitle onoptions={(options) => block && saveContent({ ...block, options })} />{/if}
   </div>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <span class="resize" title="Redimensionner" onpointerdown={(e) => { e.preventDefault(); win.startResizeDragging("SouthEast"); }}></span>
 </div>
+
+{#if settings && block}
+  <BlockDialog {block} onsave={(b) => { settings = false; saveContent(b); }} oncancel={() => (settings = false)} />
+{/if}
 
 <style>
   .widget {

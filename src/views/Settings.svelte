@@ -3,6 +3,7 @@
   import { onMount } from "svelte";
   import { app, guard, reloadSettings, runGithubSync, say, toggleScreenWidget } from "../lib/app.svelte";
   import { blockTitle } from "../lib/dashboard/layout";
+  import { ALL_TABS, LOCKED_TABS, moveTab, parseTabs, toggleTab } from "../lib/ui/tabs";
   import { isValidGithubUser } from "../lib/activity/github";
   import { formatWhen } from "../lib/clock";
   import { saveSetting, type ProviderId, type Settings } from "../lib/settings";
@@ -75,6 +76,8 @@
     });
     await reloadSettings();
   }
+
+  const tabs = $derived(parseTabs(app.settings.tabs));
 
   async function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     await guard(() => saveSetting(key, value));
@@ -196,6 +199,26 @@
     </div>
   </div>
   <p class="hint">Voile : couvre ce qui est derrière LifeOS. Panneaux : à 100 %, ils sont opaques et rien ne passe à travers.</p>
+
+  <h2>Onglets</h2>
+  <p class="hint">Choisis les onglets affichés et leur ordre (Ctrl+1, Ctrl+2… suivent cet ordre). Accueil et Réglages restent toujours là.</p>
+  <ul class="tabs">
+    {#each [...tabs, ...ALL_TABS.map((t) => t.view).filter((v) => !tabs.includes(v))] as v, i (v)}
+      {@const t = ALL_TABS.find((x) => x.view === v)!}
+      {@const shown = tabs.includes(v)}
+      <li class:off={!shown}>
+        <input type="checkbox" checked={shown} disabled={LOCKED_TABS.includes(v)}
+          onchange={() => set("tabs", toggleTab(tabs, v).join(","))} aria-label="Afficher {t.label}" />
+        <Icon name={t.icon} size={15} />
+        <span class="tl">{t.label}</span>
+        {#if shown}
+          <span class="kbd">Ctrl+{i + 1}</span>
+          <button class="mv" disabled={i === 0} onclick={() => set("tabs", moveTab(tabs, v, -1).join(","))} aria-label="Monter {t.label}"><Icon name="chevron-left" size={14} /></button>
+          <button class="mv" disabled={i === tabs.length - 1} onclick={() => set("tabs", moveTab(tabs, v, 1).join(","))} aria-label="Descendre {t.label}"><Icon name="chevron-right" size={14} /></button>
+        {/if}
+      </li>
+    {/each}
+  </ul>
 
   <h2>Widgets d'écran</h2>
   <p class="hint">Un bloc de l'accueil en petite fenêtre, toujours au premier plan, qui reste affiché quand LifeOS est masqué (ex. l'agenda en haut à gauche pendant une vidéo). Glisse-le par son titre, redimensionne-le par le coin ; sa place est gardée. Aussi depuis l'accueil : bouton <Icon name="picture-in-picture-2" size={13} /> d'un bloc.</p>
@@ -346,6 +369,14 @@
   }
   .accent.on { border-color: var(--text); }
   .sliders { margin-top: 12px; }
+  .tabs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .tabs li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; background: var(--surface); }
+  .tabs li.off { opacity: 0.55; }
+  .tabs .tl { flex: 1; }
+  .tabs .kbd { font: 12px var(--mono); color: var(--text-muted); }
+  .tabs .mv { display: grid; place-items: center; padding: 3px; }
+  .tabs .mv :global(svg) { transform: rotate(90deg); }
+  .tabs .mv:disabled { opacity: 0.3; cursor: default; }
   .widgets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 16px; }
   .providers { display: flex; flex-direction: column; gap: 6px; }
   .providers label {

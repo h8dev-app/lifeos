@@ -17,6 +17,8 @@ export interface Settings {
   weeklyReviewAuto: boolean;
   /** Veil over the background (wallpaper or windows), 0 (clear) to 0.95. */
   overlayOpacity: number;
+  /** Visible navigation tabs, in order (comma separated, see ui/tabs.ts). */
+  tabs: string;
   /** Look of the panels: "sobre" (flat) or "glass" (liquid glass). */
   style: string;
   /** Color theme (theme.ts), "auto" follows the system. */
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   githubUser: "",
   weeklyReviewAuto: true,
   overlayOpacity: 0.3,
+  tabs: "dashboard,tasks,projects,agenda,notes,activity,claude,settings",
   style: "sobre",
   theme: "graphite",
   accent: "theme",
@@ -73,13 +76,18 @@ export async function saveSetting<K extends keyof Settings>(key: K, value: Setti
   await s.set(key, value);
 }
 
-/** Home screen layout (raw JSON, validated by normalizeLayout). */
+/** Home screen layout of older versions (raw JSON, validated by normalizeLayout). */
 export async function loadDashboardLayout(): Promise<unknown> {
   return (await getStore()).get("dashboardFree");
 }
 
-export async function saveDashboardLayout(layout: unknown): Promise<void> {
-  await (await getStore()).set("dashboardFree", layout);
+/** The layout of settings.json was copied to SQLite (db/blocks.ts) once. */
+export async function isBlocksImported(): Promise<boolean> {
+  return (await (await getStore()).get("blocksInDb")) === true;
+}
+
+export async function markBlocksImported(): Promise<void> {
+  await (await getStore()).set("blocksInDb", true);
 }
 
 /** Widgets pinned on the screen (kinds), reopened at start-up. */
